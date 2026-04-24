@@ -19,8 +19,6 @@ import {
   TrendingUp,
   FileSpreadsheet,
   RefreshCw,
-  LogOut,
-  LogIn,
   Scissors,
   Box,
   ChevronRight,
@@ -29,13 +27,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { auth, db } from './firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut,
-  User
-} from 'firebase/auth';
 import { 
   doc, 
   onSnapshot, 
@@ -1224,15 +1215,13 @@ function DashboardApp() {
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [activeModule, setActiveModule] = useState<Module>('INVENTARIO CÍCLICO');
   const [activeTab, setActiveTab] = useState<'overview' | 'streets' | 'errors' | 'daily'>('overview');
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [occupancyView, setOccupancyView] = useState<'dashboard' | 'analitico'>('analitico');
 
   const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1tnl6iGFhO87pd0wYPnmOVoCSXJp10xwvSqagHrwTr-s/export?format=xlsx';
 
-  const isAdmin = user?.email === 'thiagin.rodrigues@gmail.com';
+  const isAdmin = true;
 
   const processWorkbook = useCallback(async (wb: XLSX.WorkBook) => {
     const mainSheetName = wb.SheetNames.find(n => 
@@ -1696,11 +1685,19 @@ function DashboardApp() {
       const arrayBuffer = await response.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: 'array' });
       const metrics = await processWorkbook(wb);
+      const nowIso = new Date().toISOString();
+
+      // Keep the dashboard usable even if Firestore write is blocked.
+      setData({
+        ...metrics,
+        updatedAt: nowIso,
+        updatedBy: 'Google Sheets Sync'
+      });
 
       const docRef = doc(db, 'dashboard', 'latest');
       await setDoc(docRef, {
         ...metrics,
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso,
         updatedBy: 'Google Sheets Sync'
       });
       
@@ -1713,30 +1710,19 @@ function DashboardApp() {
     }
   }, [isAdmin, processWorkbook]);
 
-  // --- Auth & Sync ---
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribeAuth();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
     const docRef = doc(db, 'dashboard', 'latest');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setData(docSnap.data() as DashboardMetrics);
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'dashboard/latest');
+      // Read can fail without auth; dashboard now uses direct Sheets sync as fallback.
+      console.warn('Firestore read unavailable, using Google Sheets sync only:', error);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   // Periodic Sync (every 30 seconds if admin is logged in)
   useEffect(() => {
@@ -1746,52 +1732,6 @@ function DashboardApp() {
       return () => clearInterval(interval);
     }
   }, [isAdmin, syncGoogleSheets]);
-
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
-  };
-
-  const handleLogout = () => signOut(auth);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-emerald-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full p-12 rounded-3xl bg-white border border-slate-200 text-center shadow-xl"
-        >
-          <div className="w-20 h-20 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/20 mx-auto">
-            <LayoutDashboard className="w-10 h-10 text-emerald-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-950 mb-2">Giro Trade</h1>
-          <p className="text-slate-600 mb-8">
-            Faça login para acessar o dashboard de contagem cíclica.
-          </p>
-          <button 
-            onClick={handleLogin}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3"
-          >
-            <LogIn className="w-6 h-6" />
-            Entrar com Google
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
 
   if (!data) {
     return (
@@ -1810,10 +1750,6 @@ function DashboardApp() {
               ? "Sincronizando dados com a planilha Google Sheets..." 
               : "Aguardando sincronização inicial dos dados."}
           </p>
-          
-          <button onClick={handleLogout} className="mt-8 text-slate-400 hover:text-slate-600 text-sm flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Sair
-          </button>
         </motion.div>
       </div>
     );
@@ -2011,23 +1947,9 @@ function DashboardApp() {
                   {uploading ? "Sincronizando..." : "Live Sync"}
                 </span>
               </div>
-              {user ? (
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-1.5 border border-rose-200 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 transition-all"
-                >
-                  <LogOut className="w-3 h-3" />
-                  Sair
-                </button>
-              ) : (
-                <button 
-                  onClick={handleLogin}
-                  className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all shadow-lg", theme.active, theme.shadow)}
-                >
-                  <LogIn className="w-3 h-3" />
-                  LogIn
-                </button>
-              )}
+              <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all shadow-lg", theme.active, theme.shadow)}>
+                Dashboard Liberado
+              </div>
             </div>
           </div>
         </div>
@@ -2675,13 +2597,9 @@ function DashboardApp() {
                     <button className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-colors">
                       <RefreshCw className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] font-black text-rose-400 uppercase tracking-widest hover:bg-rose-500/20 transition-all font-sans"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      Sair
-                    </button>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sans">
+                      Acesso Direto
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2750,13 +2668,9 @@ function DashboardApp() {
 
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-3">
-                    <button 
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] font-black text-rose-400 uppercase tracking-widest hover:bg-rose-500/20 transition-all font-sans"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      Sair
-                    </button>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sans">
+                      Acesso Direto
+                    </div>
                   </div>
                 </div>
               </div>
