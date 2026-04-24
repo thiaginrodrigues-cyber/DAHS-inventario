@@ -268,8 +268,8 @@ const getTheme = (module: Module) => {
     case 'MAPA DE OCUPAÇÃO':
       return {
         primary: 'zinc',
-        bg: 'bg-slate-50', 
-        realBg: '#f8fafc',
+        bg: 'bg-slate-200', 
+        realBg: '#e2e8f0',
         sidebarBg: 'bg-white',
         contentBg: 'bg-[#313135]/62 backdrop-blur-md', 
         border: 'border-zinc-200',
@@ -293,8 +293,8 @@ const getTheme = (module: Module) => {
     case 'INVENTARIO GERAL GIROTRADE':
       return {
         primary: 'blue',
-        bg: 'bg-slate-50',
-        realBg: '#f8fafc',
+        bg: 'bg-slate-200',
+        realBg: '#e2e8f0',
         sidebarBg: 'bg-white',
         contentBg: 'bg-blue-600/60 backdrop-blur-md',
         border: 'border-blue-700',
@@ -318,8 +318,8 @@ const getTheme = (module: Module) => {
     case 'ANALISE DE CORTE':
       return {
         primary: 'rose',
-        bg: 'bg-slate-50',
-        realBg: '#f8fafc',
+        bg: 'bg-slate-200',
+        realBg: '#e2e8f0',
         sidebarBg: 'bg-white',
         contentBg: 'bg-white/60 backdrop-blur-md',
         border: 'border-rose-100',
@@ -342,8 +342,8 @@ const getTheme = (module: Module) => {
     default:
       return {
         primary: 'emerald',
-        bg: 'bg-slate-50',
-        realBg: '#f8fafc',
+        bg: 'bg-slate-200',
+        realBg: '#e2e8f0',
         sidebarBg: 'bg-white',
         contentBg: 'bg-emerald-900/58 backdrop-blur-md',
         border: 'border-emerald-100',
