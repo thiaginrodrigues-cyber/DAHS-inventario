@@ -271,7 +271,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-50', 
         realBg: '#f8fafc',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-[#313135] backdrop-blur-sm', 
+        contentBg: 'bg-[#313135]/62 backdrop-blur-md', 
         border: 'border-zinc-200',
         contentBorder: 'border-black border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.1)]', 
         active: 'bg-zinc-900 text-white shadow-2xl',
@@ -296,7 +296,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-50',
         realBg: '#f8fafc',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-blue-600',
+        contentBg: 'bg-blue-600/60 backdrop-blur-md',
         border: 'border-blue-700',
         contentBorder: 'border-blue-900 border-4 shadow-[0_0_20px_rgba(59,130,246,0.4)]',
         active: 'bg-blue-800 text-white',
@@ -321,7 +321,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-50',
         realBg: '#f8fafc',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-white',
+        contentBg: 'bg-white/60 backdrop-blur-md',
         border: 'border-rose-100',
         contentBorder: 'border-rose-50',
         active: 'bg-rose-600 text-white',
@@ -345,7 +345,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-50',
         realBg: '#f8fafc',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-emerald-900/90 backdrop-blur-md',
+        contentBg: 'bg-emerald-900/58 backdrop-blur-md',
         border: 'border-emerald-100',
         contentBorder: 'border-4 border-emerald-400',
         active: 'bg-emerald-600 text-white',
@@ -1846,33 +1846,30 @@ function DashboardApp() {
           <div className="wave wave-2"></div>
         </div>
 
-      {/* Background Watermark Logo */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[-1] opacity-[0.05]">
-        <div className="flex items-center gap-0 scale-[6] rotate-[-12deg]">
-          <div className="w-20 h-16 flex-shrink-0">
+        {/* Centered background logo, same symbol as header */}
+        <div className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center">
+          <div className="w-[85vw] max-w-[1200px] aspect-square opacity-[0.2]">
             <svg viewBox="0 0 100 100" className="w-full h-full">
-              <path 
-                d="M 15 45 A 16 16 0 0 1 47 45" 
-                fill="none" 
-                stroke={theme.logo} 
-                strokeWidth="12" 
+              <path
+                d="M 15 45 A 16 16 0 0 1 47 45"
+                fill="none"
+                stroke={theme.logoTop || "#ffffff"}
+                strokeWidth="12"
                 strokeLinecap="round"
               />
-              <path 
-                d="M 32 55 A 16 16 0 0 0 64 55" 
-                fill="none" 
-                stroke={theme.logo} 
-                strokeWidth="12" 
+              <path
+                d="M 32 55 A 16 16 0 0 0 64 55"
+                fill="none"
+                stroke={theme.logo}
+                strokeWidth="12"
                 strokeLinecap="round"
-                opacity="0.5"
               />
             </svg>
           </div>
         </div>
-      </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-transparent">
+      <main className="relative z-10 flex-1 overflow-y-auto p-4 md:p-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
           {activeModule === 'INVENTARIO CÍCLICO' ? (
             <>
