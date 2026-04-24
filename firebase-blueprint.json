@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Street": {
+      "title": "Street",
+      "description": "Data for a specific street",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "plan": { "type": "number" },
+        "counted": { "type": "number" },
+        "pending": { "type": "number" },
+        "status": { "type": "number" },
+        "errors": { "type": "number" },
+        "surplus": { "type": "number" },
+        "shortage": { "type": "number" },
+        "finalized": { "type": "number" }
+      },
+      "required": ["id", "name", "plan", "counted", "pending", "status", "errors", "surplus", "shortage", "finalized"]
+    },
+    "DashboardData": {
+      "title": "Dashboard Data",
+      "description": "The complete dashboard state",
+      "type": "object",
+      "properties": {
+        "totalPositions": { "type": "number" },
+        "totalCounted": { "type": "number" },
+        "totalPending": { "type": "number" },
+        "accuracy": { "type": "number" },
+        "finalAccuracy": { "type": "number" },
+        "totalErrors": { "type": "number" },
+        "surplus": { "type": "number" },
+        "shortage": { "type": "number" },
+        "finalizedDivergences": { "type": "number" },
+        "generalStatus": { "type": "number" },
+        "dailyCount": { "type": "number" },
+        "monthlyCount": { "type": "number" },
+        "weeklyGoal": { "type": "number" },
+        "dailyGoal": { "type": "number" },
+        "weeklyGoalCalculated": { "type": "number" },
+        "dailyHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string" },
+              "dayName": { "type": "string" },
+              "count": { "type": "number" }
+            }
+          }
+        },
+        "weeklyHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "weekRange": { "type": "string" },
+              "count": { "type": "number" }
+            }
+          }
+        },
+        "streets": {
+          "type": "array",
+          "items": { "$ref": "Street" }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["totalPositions", "totalCounted", "totalPending", "accuracy", "finalAccuracy", "totalErrors", "surplus", "shortage", "finalizedDivergences", "generalStatus", "streets", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/dashboard/latest": {
+      "schema": "DashboardData",
+      "description": "The most recently uploaded dashboard data"
+    }
+  }
+}

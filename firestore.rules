@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: dashboard
+    // Document ID: latest
+    // Fields:
+    //   - totalPositions: number (required)
+    //   - totalCounted: number (required)
+    //   - totalPending: number (required)
+    //   - accuracy: number (required)
+    //   - finalAccuracy: number (required)
+    //   - totalErrors: number (required)
+    //   - surplus: number (required)
+    //   - shortage: number (required)
+    //   - finalizedDivergences: number (required)
+    //   - generalStatus: number (required)
+    //   - dailyCount: number (optional)
+    //   - monthlyCount: number (optional)
+    //   - weeklyGoal: number (optional)
+    //   - dailyGoal: number (optional)
+    //   - weeklyGoalCalculated: number (optional)
+    //   - dailyHistory: list (optional)
+    //   - weeklyHistory: list (optional)
+    //   - streets: list (required) - Array of street objects with id, name, plan, counted, pending, status, errors, surplus, shortage, finalized
+    //   - updatedAt: string (required) - ISO date string
+    //   - updatedBy: string (optional) - User email
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "thiagin.rodrigues@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidDashboardData(data) {
+      return data.keys().hasAll(['totalPositions', 'totalCounted', 'totalPending', 'accuracy', 'finalAccuracy', 'totalErrors', 'surplus', 'shortage', 'finalizedDivergences', 'generalStatus', 'streets', 'updatedAt']) &&
+             data.totalPositions is number &&
+             data.totalCounted is number &&
+             data.totalPending is number &&
+             data.accuracy is number &&
+             data.finalAccuracy is number &&
+             data.totalErrors is number &&
+             data.surplus is number &&
+             data.shortage is number &&
+             data.finalizedDivergences is number &&
+             data.generalStatus is number &&
+             data.streets is list &&
+             data.updatedAt is string;
+    }
+
+    match /dashboard/latest {
+      // Allow anyone authenticated to read the latest data
+      allow read: if isAuthenticated();
+      
+      // Only admin can update the data (upload new spreadsheet)
+      allow write: if isAdmin() && isValidDashboardData(request.resource.data);
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
