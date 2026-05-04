@@ -451,13 +451,13 @@ const CollapsibleTableRow = ({ area, showStructure = false, showOccupied = false
         </td>
         {showStructure && (
           <>
-            <td className={cn("py-3 px-4 text-right font-mono text-xs text-slate-600", isTotalCD && "text-white font-black")}>{(area.structure || 0).toLocaleString()}</td>
-            <td className={cn("py-3 px-4 text-right font-mono text-xs text-slate-600", isTotalCD && "text-white font-black")}>{(area.addresses || 0).toLocaleString()}</td>
+            <td className={cn("py-3 px-4 text-right font-mono text-xs", theme ? theme.contentTitle : "text-slate-800", isTotalCD && "text-white font-black")}>{(area.structure || 0).toLocaleString()}</td>
+            <td className={cn("py-3 px-4 text-right font-mono text-xs", theme ? theme.contentTitle : "text-slate-800", isTotalCD && "text-white font-black")}>{(area.addresses || 0).toLocaleString()}</td>
           </>
         )}
         {showOccupied && (
           <>
-            <td className={cn("py-3 px-4 text-right font-mono text-xs text-slate-600", isTotalCD && "text-white font-black")}>
+            <td className={cn("py-3 px-4 text-right font-mono text-xs", theme ? theme.contentTitle : "text-slate-800", isTotalCD && "text-white font-black")}>
               {(area.occupied || 0).toLocaleString()}
             </td>
             <td className={cn("py-3 px-4 text-right font-mono text-xs text-amber-600 font-bold", isTotalCD && "text-yellow-200 font-black scale-110")}>
@@ -466,12 +466,12 @@ const CollapsibleTableRow = ({ area, showStructure = false, showOccupied = false
           </>
         )}
         {showBlocked && (
-          <td className={cn("py-3 px-4 text-right font-mono text-xs text-rose-400", isTotalCD && "font-black")}>
+          <td className={cn("py-3 px-4 text-right font-mono text-xs", theme ? theme.contentTitle : "text-slate-800", isTotalCD && "font-black")}>
             {((area.definitivo || 0) + (area.operacional || 0)).toLocaleString()}
           </td>
         )}
         {showAvailable && (
-          <td className={cn("py-3 px-4 text-right font-mono text-xs text-emerald-400", isTotalCD && "font-black")}>{(area.disponivel || 0).toLocaleString()}</td>
+          <td className={cn("py-3 px-4 text-right font-mono text-xs", theme ? theme.contentTitle : "text-slate-800", isTotalCD && "font-black")}>{(area.disponivel || 0).toLocaleString()}</td>
         )}
       </tr>
       {isExpanded && hasSubcategories && area.subcategories?.map(sub => (
@@ -710,28 +710,28 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
       .sort((a, b) => (a.daysRemaining || 999) - (b.daysRemaining || 999));
 
     return (
-      <div className="w-full mt-6 bg-black/40 rounded-2xl overflow-hidden border border-white/20">
-        <div className="overflow-y-auto max-h-[300px] custom-scrollbar">
+      <div className="w-full mt-6 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm">
+        <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-10">
-              <tr className={cn("border-b border-white/20", theme.primary === 'blue' ? "bg-blue-800" : "bg-[#111]")}>
-                <th className={cn("px-3 py-2 text-[8px] font-black uppercase tracking-widest", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>SKU</th>
-                <th className={cn("px-3 py-2 text-[8px] font-black uppercase tracking-widest text-right", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Vencimento</th>
+              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}> 
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200")}>SKU</th>
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 text-right")}>Vencimento</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-white/10">
               {list.length > 0 ? (
                 list.map((item, idx) => (
-                  <tr key={`${item.sku}-${idx}`} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-3 py-2">
-                      <div className={cn("text-[10px] font-bold font-mono leading-none", theme.contentTitle)}>{item.sku}</div>
-                      <div className="text-[8px] text-zinc-500 truncate max-w-[150px] mt-0.5">{item.description}</div>
+                  <tr key={`${item.sku}-${idx}`} className="bg-slate-900/70 hover:bg-slate-800/80 transition-colors group">
+                    <td className="px-4 py-4 align-top">
+                      <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                      <div className="text-[10px] text-amber-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
                     </td>
-                    <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <span className={cn("text-[10px] font-black font-mono", color)}>
+                    <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                      <span className={cn("text-[12px] font-black font-mono", color)}>
                         {item.daysRemaining}d
                       </span>
-                      <div className="text-[8px] text-zinc-500 font-black mt-0.5 opacity-80">
+                      <div className="text-[10px] text-slate-300 font-bold mt-1">
                         {item.expirationDate}
                       </div>
                     </td>
