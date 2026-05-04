@@ -100,7 +100,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 text-center">
-          <div className="max-w-md w-full p-8 bg-rose-500/10 border border-rose-500/20 rounded-3xl">
+          <div className="max-w-md w-full p-8 bg-rose-500/25 border border-rose-500/40 rounded-3xl">
             <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Ops! Algo deu errado.</h2>
             <p className="text-emerald-100/60 mb-6 text-sm">
@@ -271,7 +271,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-300', 
         realBg: '#cbd5e1',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-[#313135]/48 backdrop-blur-md', 
+        contentBg: 'bg-[#313135]/72 backdrop-blur-md', 
         border: 'border-zinc-200',
         contentBorder: 'border-black border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.1)]', 
         active: 'bg-zinc-900 text-white shadow-2xl',
@@ -296,7 +296,7 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-300',
         realBg: '#cbd5e1',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-blue-600/46 backdrop-blur-md',
+        contentBg: 'bg-blue-600/70 backdrop-blur-md',
         border: 'border-blue-700',
         contentBorder: 'border-blue-900 border-4 shadow-[0_0_20px_rgba(59,130,246,0.4)]',
         active: 'bg-blue-800 text-white',
@@ -321,13 +321,13 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-300',
         realBg: '#cbd5e1',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-white/45 backdrop-blur-md',
+        contentBg: 'bg-white/70 backdrop-blur-md',
         border: 'border-rose-100',
         contentBorder: 'border-rose-50',
         active: 'bg-rose-600 text-white',
         hover: 'hover:bg-rose-50',
         text: 'text-slate-600',
-        contentText: 'text-slate-500',
+        contentText: 'text-slate-700',
         contentTitle: 'text-slate-900',
         icon: 'text-rose-600',
         wave1: 'rgba(225,29,72,0.02)',
@@ -345,13 +345,13 @@ const getTheme = (module: Module) => {
         bg: 'bg-slate-300',
         realBg: '#cbd5e1',
         sidebarBg: 'bg-white',
-        contentBg: 'bg-emerald-900/42 backdrop-blur-md',
+        contentBg: 'bg-emerald-900/68 backdrop-blur-md',
         border: 'border-emerald-100',
         contentBorder: 'border-4 border-emerald-400',
         active: 'bg-emerald-600 text-white',
         hover: 'hover:bg-emerald-50',
         text: 'text-slate-600',
-        contentText: 'text-emerald-50/80',
+        contentText: 'text-emerald-50',
         contentTitle: 'text-white',
         icon: 'text-emerald-500',
         wave1: 'rgba(16,185,129,0.02)',
@@ -424,7 +424,7 @@ const CollapsibleTableRow = ({ area, showStructure = false, showOccupied = false
         )}
       </tr>
       {isExpanded && hasSubcategories && area.subcategories?.map(sub => (
-        <tr key={sub.area} className={cn("italic transition-colors", !theme && "border-b border-slate-100", theme ? cn(theme.contentBorder, "bg-black/20") : "bg-slate-50/30")}>
+        <tr key={sub.area} className={cn("italic transition-colors", !theme && "border-b border-slate-100", theme ? cn(theme.contentBorder, "bg-black/35") : "bg-slate-50/30")}>
           <td className="py-1 px-4 pl-12 text-[11px] text-yellow-400 font-black">{sub.area}</td>
           {showStructure && (
             <>
@@ -508,7 +508,7 @@ const OccupancyCard = ({ title, areaName, subtitle, data, theme }: { title: stri
                   key={lvl} 
                   className={cn(
                     "flex-1 rounded-sm transition-all duration-1000",
-                    isFilled ? barColor : (theme ? "bg-zinc-900/30" : "bg-white")
+                    isFilled ? barColor : (theme ? "bg-zinc-900/50" : "bg-white")
                   )}
                 />
               );
@@ -613,20 +613,20 @@ const AlertCard = ({ sub, theme }: { sub: OccupancyMetric, theme?: any }) => {
       </div>
       
       <div className="grid grid-cols-4 gap-2">
-        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/10" : "border border-slate-100 bg-slate-50/50")}>
-          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-black" : "opacity-50")}>Total</div>
-          <div className={cn("text-sm font-black", theme ? "text-slate-600" : "text-slate-900")}>{sub.addresses.toLocaleString()}</div>
+        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/25" : "border border-slate-100 bg-slate-50/50")}>
+          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-white" : "opacity-50")}>Total</div>
+          <div className={cn("text-sm font-black", theme ? "text-white" : "text-slate-900")}>{sub.addresses.toLocaleString()}</div>
         </div>
-        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/10" : "border border-slate-100 bg-slate-50/50")}>
-          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-black" : "opacity-50")}>Ocup.</div>
+        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/25" : "border border-slate-100 bg-slate-50/50")}>
+          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-white" : "opacity-50")}>Ocup.</div>
           <div className="text-sm font-black text-orange-600">{sub.occupied.toLocaleString()}</div>
         </div>
-        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/10" : "border border-slate-100 bg-slate-50/50")}>
-          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-black" : "opacity-50")}>Bloq.</div>
+        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/25" : "border border-slate-100 bg-slate-50/50")}>
+          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-white" : "opacity-50")}>Bloq.</div>
           <div className="text-sm font-black text-rose-600">{(sub.definitivo + sub.operacional).toLocaleString()}</div>
         </div>
-        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/10" : "border border-slate-100 bg-slate-50/50")}>
-          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-black" : "opacity-50")}>Livre</div>
+        <div className={cn("rounded-xl p-3 text-center transition-colors duration-500", theme ? "bg-black/25" : "border border-slate-100 bg-slate-50/50")}>
+          <div className={cn("text-[7px] uppercase font-black mb-1", theme ? "text-white" : "opacity-50")}>Livre</div>
           <div className="text-sm font-black text-emerald-600">{sub.disponivel.toLocaleString()}</div>
         </div>
       </div>
@@ -659,11 +659,11 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
       .sort((a, b) => (a.daysRemaining || 999) - (b.daysRemaining || 999));
 
     return (
-      <div className="w-full mt-6 bg-black/40 rounded-2xl overflow-hidden border border-white/10">
+      <div className="w-full mt-6 bg-black/40 rounded-2xl overflow-hidden border border-white/20">
         <div className="overflow-y-auto max-h-[300px] custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-10">
-              <tr className={cn("border-b border-white/10", theme.primary === 'blue' ? "bg-blue-800" : "bg-[#111]")}>
+              <tr className={cn("border-b border-white/20", theme.primary === 'blue' ? "bg-blue-800" : "bg-[#111]")}>
                 <th className={cn("px-3 py-2 text-[8px] font-black uppercase tracking-widest", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>SKU</th>
                 <th className={cn("px-3 py-2 text-[8px] font-black uppercase tracking-widest text-right", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Vencimento</th>
               </tr>
@@ -703,7 +703,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-black/20 rounded-2xl w-fit border border-white/5">
+      <div className="flex gap-2 p-1 bg-black/20 rounded-2xl w-fit border border-white/10">
         <button
           onClick={() => setActiveTab('geral')}
           className={cn(
@@ -740,7 +740,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border", theme.primary === 'blue' ? "bg-white/20 border-white/30" : "bg-blue-500/10 border-blue-500/20")}>
+                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border", theme.primary === 'blue' ? "bg-white/40 border-white/60" : "bg-blue-500/20 border-blue-500/40")}>
                   <Box className={cn("w-8 h-8", theme.primary === 'blue' ? "text-white" : "text-blue-500")} />
                 </div>
                 <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>TOTAL DE SKU´S</h3>
@@ -764,8 +764,8 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                         className={cn(
                           "w-full border rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 transition-all",
                           theme.primary === 'blue' 
-                            ? "bg-white/10 border-white/20 text-white placeholder:text-white/40 ring-white/30" 
-                            : "bg-black/20 border border-white/10 text-white ring-blue-500/50"
+                            ? "bg-white/20 border-white/40 text-white placeholder:text-white/60 ring-white/50" 
+                            : "bg-black/40 border border-white/20 text-white ring-blue-500/50"
                         )}
                       />
                    </div>
@@ -778,13 +778,13 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               <div className="overflow-x-auto max-h-[600px] custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-20">
-                    <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-800 border-white/10" : "bg-[#111] border-white/5")}>
+                    <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-800 border-white/20" : "bg-[#111] border-white/15")}>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>SKU</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Descrição do Produto</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Prazo de Validade</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-white/10">
                     {filteredItems.slice(0, 500).map((item, idx) => (
                       <tr key={`${item.sku}-${idx}`} className="hover:bg-white/5 transition-colors group">
                         <td className={cn("px-6 py-4 text-xs font-bold font-mono", theme.contentTitle)}>{item.sku}</td>
@@ -824,7 +824,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             {/* FEFO Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/20">
+                <div className="w-12 h-12 bg-amber-500/25 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/40">
                   <AlertCircle className="w-6 h-6 text-amber-500" />
                 </div>
                 <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>FEFO</h3>
@@ -836,7 +836,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               </div>
 
               <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/20">
+                <div className="w-12 h-12 bg-blue-500/25 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/40">
                   <Info className="w-6 h-6 text-blue-500" />
                 </div>
                 <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>PRÉ-FEFO</h3>
@@ -848,7 +848,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               </div>
 
               <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/20">
+                <div className="w-12 h-12 bg-rose-500/25 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/40">
                   <AlertCircle className="w-6 h-6 text-rose-500 animate-pulse" />
                 </div>
                 <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>PERDA</h3>
@@ -983,7 +983,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
           >
             {/* 1. ESTRUTURA E ENDEREÇOS */}
             <div className={cn("rounded-xl border shadow-sm overflow-hidden flex flex-col transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-white border-slate-100")}>
-              <div className={cn("p-5 border-b bg-gradient-to-r from-blue-500/10 to-transparent", theme ? theme.contentBorder : "border-slate-100")}>
+              <div className={cn("p-5 border-b bg-gradient-to-r from-blue-500/25 to-transparent", theme ? theme.contentBorder : "border-slate-100")}>
                 <h3 className={cn("text-xs font-black tracking-[0.3em] uppercase mb-1", theme ? theme.contentTitle : "text-slate-900")}>Estrutura & Endereços</h3>
                 <p className={cn("text-[9px] uppercase tracking-widest font-medium", theme ? theme.contentText : "text-slate-500")}>Mapeamento por Posição e Setor</p>
               </div>
@@ -1005,7 +1005,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
 
             {/* 2. OCUPAÇÃO TOTAL */}
             <div className={cn("rounded-xl border shadow-sm overflow-hidden flex flex-col transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-white border-slate-100")}>
-              <div className={cn("p-5 bg-gradient-to-r from-amber-500/10 to-transparent", !theme && "border-b border-slate-100")}>
+              <div className={cn("p-5 bg-gradient-to-r from-amber-500/25 to-transparent", !theme && "border-b border-slate-100")}>
                 <h3 className={cn("text-xs font-black tracking-[0.3em] uppercase mb-1", theme ? theme.contentTitle : "text-slate-900")}>Ocupação Total</h3>
                 <p className={cn("text-[9px] uppercase tracking-widest font-medium", theme ? theme.contentText : "text-slate-500")}>Status de Armazenagem</p>
               </div>
@@ -1027,7 +1027,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
 
             {/* 3. CATEGORIAS BLOQUEADAS */}
             <div className={cn("rounded-xl border shadow-sm overflow-hidden flex flex-col transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-white border-slate-100")}>
-              <div className={cn("p-5 bg-gradient-to-r from-rose-500/10 to-transparent", !theme && "border-b border-slate-100")}>
+              <div className={cn("p-5 bg-gradient-to-r from-rose-500/25 to-transparent", !theme && "border-b border-slate-100")}>
                 <h3 className={cn("text-xs font-black tracking-[0.3em] uppercase mb-1", theme ? theme.contentTitle : "text-slate-900")}>Posições Bloqueadas</h3>
                 <p className={cn("text-[9px] uppercase tracking-widest font-medium", theme ? theme.contentText : "text-slate-500")}>Definitivo & Operacional</p>
               </div>
@@ -1048,7 +1048,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
 
             {/* 4. ESPAÇO DISPONÍVEL */}
             <div className={cn("rounded-xl border shadow-sm overflow-hidden flex flex-col transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-white border-slate-100")}>
-              <div className={cn("p-5 bg-gradient-to-r from-emerald-500/10 to-transparent", !theme && "border-b border-slate-100")}>
+              <div className={cn("p-5 bg-gradient-to-r from-emerald-500/25 to-transparent", !theme && "border-b border-slate-100")}>
                 <h3 className={cn("text-xs font-black tracking-[0.3em] uppercase mb-1", theme ? theme.contentTitle : "text-slate-900")}>Espaço Disponível</h3>
                 <p className={cn("text-[9px] uppercase tracking-widest font-medium", theme ? theme.contentText : "text-slate-500")}>Capacidade Ociosa</p>
               </div>
@@ -1098,25 +1098,25 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
             </div>
 
             {/* Alerta de Ocupação (Redesigned to match image) */}
-            <div className={cn("rounded-2xl border shadow-2xl overflow-hidden flex flex-col p-6 space-y-8 transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-[#0f0f0f] border-white/10")}>
+            <div className={cn("rounded-2xl border shadow-2xl overflow-hidden flex flex-col p-6 space-y-8 transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder} ${theme.contentShadow}` : "bg-[#0f0f0f] border-white/20")}>
               {/* Header with Toggle and Legend */}
               <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", theme ? "bg-white/10" : "bg-white/10")}>
+                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", theme ? "bg-white/20" : "bg-white/20")}>
                       <Info className={cn("w-3.5 h-3.5", theme ? "text-white" : "text-white")} />
                     </div>
                     <h3 className={cn("text-xs font-black tracking-[0.2em] uppercase", theme ? theme.contentTitle : "text-white")}>Alerta de Ocupação</h3>
                   </div>
                   
-                  <div className={cn("h-4 w-[1px] mx-2", theme ? "bg-white/10" : "bg-white/10")} />
+                  <div className={cn("h-4 w-[1px] mx-2", theme ? "bg-white/20" : "bg-white/20")} />
                   
                   <div className={cn("p-1 rounded-lg flex items-center gap-1 border transition-all duration-500", theme ? `${theme.contentBg} ${theme.contentBorder}` : "bg-[#1a1a1a] border-white/5")}>
                     <button 
                       onClick={() => setAlertView('categoria')}
                       className={cn(
                         "px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
-                        alertView === 'categoria' ? (theme ? "bg-zinc-950 text-white shadow-xl border border-white/10" : "bg-white text-zinc-950 shadow-lg") : "text-white/40 hover:text-white"
+                        alertView === 'categoria' ? (theme ? "bg-zinc-950 text-white shadow-xl border border-white/20" : "bg-white text-zinc-950 shadow-lg") : "text-white/40 hover:text-white"
                       )}
                     >
                       Por Categoria
@@ -1125,7 +1125,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
                       onClick={() => setAlertView('geral')}
                       className={cn(
                         "px-4 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
-                        alertView === 'geral' ? (theme ? "bg-zinc-950 text-white shadow-xl border border-white/10" : "bg-white text-zinc-950 shadow-lg") : "text-white/40 hover:text-white"
+                        alertView === 'geral' ? (theme ? "bg-zinc-950 text-white shadow-xl border border-white/20" : "bg-white text-zinc-950 shadow-lg") : "text-white/40 hover:text-white"
                       )}
                     >
                       Geral
@@ -1181,7 +1181,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
                           }
                           
                           {(!area.subcategories || area.subcategories.length === 0) && (
-                            <div className={cn("py-12 text-center rounded-xl border border-dashed", theme ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10")}>
+                            <div className={cn("py-12 text-center rounded-xl border border-dashed", theme ? "bg-slate-50 border-slate-200" : "bg-white/15 border-white/20")}>
                               <p className={cn("text-[9px] uppercase font-bold tracking-widest", theme ? "text-slate-300" : "text-white/20")}>Nenhum subsetor encontrado</p>
                             </div>
                           )}
@@ -1197,7 +1197,7 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
                       <AlertCard key={idx} sub={sector} theme={theme} />
                     ))
                   ) : (
-                    <div className={cn("col-span-full py-20 text-center rounded-2xl border border-dashed", theme ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10")}>
+                    <div className={cn("col-span-full py-20 text-center rounded-2xl border border-dashed", theme ? "bg-slate-50 border-slate-200" : "bg-white/15 border-white/20")}>
                       <p className={cn("text-xs uppercase font-black tracking-[0.3em]", theme ? "text-slate-300" : "text-white/20")}>Nenhum dado consolidado encontrado para os setores selecionados</p>
                     </div>
                   )}
@@ -2169,7 +2169,7 @@ function DashboardApp() {
                           {street.status.toFixed(2)}%
                         </td>
                         <td className="px-6 py-4 w-48">
-                          <div className="w-full h-2 rounded-full overflow-hidden bg-white/10">
+                          <div className="w-full h-2 rounded-full overflow-hidden bg-white/20">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${Math.min(street.status, 100)}%` }}
@@ -2199,7 +2199,7 @@ function DashboardApp() {
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className={cn("backdrop-blur-[2px] p-8 rounded-3xl border shadow-lg flex flex-col items-center text-center transition-all duration-500", theme.contentBg, theme.contentBorder)}>
-                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                  <div className="w-16 h-16 bg-white/25 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
                     <AlertCircle className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Total de Erros</h3>
@@ -2212,7 +2212,7 @@ function DashboardApp() {
                       <span className="text-xs font-bold text-white/40 uppercase">Sobra (+)</span>
                       <span className="text-lg font-bold text-emerald-400">{data.surplus}</span>
                     </div>
-                    <div className="w-px h-8 bg-white/10 self-center" />
+                    <div className="w-px h-8 bg-white/20 self-center" />
                     <div className="flex flex-col">
                       <span className="text-xs font-bold text-white/40 uppercase">Falta (-)</span>
                       <span className="text-lg font-bold text-rose-400">{data.shortage}</span>
@@ -2222,7 +2222,7 @@ function DashboardApp() {
                 </div>
 
                 <div className={cn("backdrop-blur-[2px] p-8 rounded-3xl border shadow-lg flex flex-col items-center text-center transition-all duration-500", theme.contentBg, theme.contentBorder)}>
-                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                  <div className="w-16 h-16 bg-white/25 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
                     <CheckCircle2 className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Divergências Finalizadas</h3>
@@ -2233,7 +2233,7 @@ function DashboardApp() {
                 </div>
 
                 <div className={cn("backdrop-blur-[2px] p-8 rounded-3xl border shadow-lg flex flex-col items-center text-center transition-all duration-500", theme.contentBg, theme.contentBorder)}>
-                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                  <div className="w-16 h-16 bg-white/25 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Acuracidade Final</h3>
@@ -2280,7 +2280,7 @@ function DashboardApp() {
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className={cn("backdrop-blur-[2px] p-8 rounded-3xl border shadow-lg flex flex-col items-center text-center opacity-80 transition-all duration-500", theme.contentBg, theme.contentBorder)}>
-                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                  <div className="w-16 h-16 bg-white/25 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Meta Semanal</h3>
@@ -2304,7 +2304,7 @@ function DashboardApp() {
                 </div>
 
                 <div className={cn("backdrop-blur-[2px] p-8 rounded-3xl border shadow-lg flex flex-col items-center text-center opacity-80 transition-all duration-500", theme.contentBg, theme.contentBorder)}>
-                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                  <div className="w-16 h-16 bg-white/25 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
                     <FileSpreadsheet className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Meta Mês</h3>
@@ -2315,12 +2315,12 @@ function DashboardApp() {
                   <span className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Total Posições</span>
                   
                   {/* Summary inside Meta Mês */}
-                  <div className={cn("w-full pt-6 border-t flex justify-center gap-10", "border-white/10")}>
+                  <div className={cn("w-full pt-6 border-t flex justify-center gap-10", "border-white/20")}>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Contado</span>
                       <span className="text-2xl font-bold text-emerald-400">{data.totalCounted}</span>
                     </div>
-                    <div className={cn("w-px h-10 self-center", "bg-white/10")} />
+                    <div className={cn("w-px h-10 self-center", "bg-white/20")} />
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Falta</span>
                       <span className="text-2xl font-bold text-rose-400">{data.totalPending}</span>
@@ -2366,7 +2366,7 @@ function DashboardApp() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b transition-all duration-500 bg-white/5 border-white/10">
+                      <tr className="border-b transition-all duration-500 bg-white/15 border-white/20">
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Data</th>
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Dia</th>
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Contada</th>
@@ -2375,7 +2375,7 @@ function DashboardApp() {
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Status vs Meta</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y transition-all duration-500 divide-white/10">
+                    <tbody className="divide-y transition-all duration-500 divide-white/20">
                       {(() => {
                         let accumulatedDeficit = 0;
                         return data.dailyHistory && data.dailyHistory.length > 0 ? (
@@ -2418,8 +2418,8 @@ function DashboardApp() {
                                 className={cn(
                                   "transition-colors duration-150 border-l-4",
                                   percentage >= 100 
-                                    ? "bg-white/10 border-l-emerald-500 hover:bg-white/20"
-                                    : "hover:bg-white/5 border-l-transparent"
+                                    ? "bg-white/20 border-l-emerald-500 hover:bg-white/30"
+                                    : "hover:bg-white/10 border-l-transparent"
                                 )}
                               >
                                 <td className={cn("px-4 py-3 text-sm font-bold text-white")}>{item.date}</td>
@@ -2468,7 +2468,7 @@ function DashboardApp() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b transition-all duration-500 bg-white/5 border-white/10">
+                      <tr className="border-b transition-all duration-500 bg-white/15 border-white/20">
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Semana</th>
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Contada</th>
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Previsão</th>
@@ -2476,7 +2476,7 @@ function DashboardApp() {
                         <th className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/40">Status vs Meta</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y transition-all duration-500 divide-white/10">
+                    <tbody className="divide-y transition-all duration-500 divide-white/20">
                       {(() => {
                         let accumulatedWeeklyDeficit = 0;
                         return data.weeklyHistory && data.weeklyHistory.length > 0 ? (
@@ -2519,8 +2519,8 @@ function DashboardApp() {
                                 className={cn(
                                   "transition-colors duration-150 border-l-4",
                                   percentage >= 100 
-                                    ? "bg-white/10 border-l-emerald-500 hover:bg-white/20"
-                                    : "hover:bg-white/5 border-l-transparent"
+                                    ? "bg-white/20 border-l-emerald-500 hover:bg-white/30"
+                                    : "hover:bg-white/10 border-l-transparent"
                                 )}
                               >
                                 <td className={cn("px-4 py-3 text-sm font-bold text-white")}>{item.weekRange}</td>
@@ -2589,11 +2589,11 @@ function DashboardApp() {
                       Ocupação <span className={(!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "text-white/40" : "text-black/20"}>CD</span>
                     </h1>
                     <div className="absolute -bottom-3 left-0 right-0 flex items-center justify-center gap-3">
-                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-r from-transparent", (!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "to-white/10" : "to-black/5")}></div>
+                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-r from-transparent", (!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "to-white/20" : "to-black/5")}></div>
                       <span className={cn("text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] whitespace-nowrap", (!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "text-white/40" : "text-black/30")}>
                         Performance & Ocupação
                       </span>
-                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-l from-transparent", (!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "to-white/10" : "to-black/5")}></div>
+                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-l from-transparent", (!theme || theme.bg.includes('zinc-950') || theme.bg.includes('black') || theme.contentBg.includes('#18181b') || theme.contentBg.includes('#0a0a0a')) ? "to-white/20" : "to-black/5")}></div>
                     </div>
                   </div>
                 </motion.div>
@@ -2605,7 +2605,7 @@ function DashboardApp() {
                     <div className={cn("text-[8px] font-bold uppercase tracking-[0.2em] mt-1", theme ? (theme.headerText || theme.contentText) : "text-slate-500")}>Inventory Analyst</div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-colors">
+                    <button className="p-2 rounded-lg bg-white/10 border border-white/20 text-white/60 hover:text-white transition-colors">
                       <RefreshCw className="w-4 h-4" />
                     </button>
                     <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sans">
@@ -2668,11 +2668,11 @@ function DashboardApp() {
                       {activeModule === 'ANALISE DE CORTE' ? 'Análise de' : 'Inventário'} <span className={theme.contentText}>{activeModule === 'ANALISE DE CORTE' ? 'Corte' : 'Geral'}</span>
                     </h1>
                     <div className="absolute -bottom-3 left-0 right-0 flex items-center justify-center gap-3">
-                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-r from-transparent", "to-white/10")}></div>
+                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-r from-transparent", "to-white/20")}></div>
                       <span className={cn("text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] whitespace-nowrap opacity-60", theme.contentText)}>
                         Performance & Girotrade
                       </span>
-                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-l from-transparent", "to-white/10")}></div>
+                      <div className={cn("hidden md:block h-[2px] w-8 lg:w-12 bg-gradient-to-l from-transparent", "to-white/20")}></div>
                     </div>
                   </div>
                 </motion.div>
