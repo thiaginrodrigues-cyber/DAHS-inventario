@@ -2142,20 +2142,20 @@ function DashboardApp() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b transition-all duration-500 bg-white/5 border-white/10">
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Rua</th>
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Plano (Fixo)</th>
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Contado</th>
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Pendente</th>
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Status (%)</th>
-                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/40">Progresso</th>
+                    <tr className="border-b transition-all duration-500 bg-white/10 border-white/20">
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Rua</th>
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Plano (Fixo)</th>
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Contado</th>
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Pendente</th>
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Status (%)</th>
+                      <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white/60">Progresso</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y transition-all duration-500 divide-white/5">
+                  <tbody className="divide-y transition-all duration-500 divide-white/10">
                     {filteredStreets.map((street) => (
-                      <tr key={street.id} className="transition-colors group hover:bg-white/5">
+                      <tr key={street.id} className="transition-colors group hover:bg-white/10">
                         <td className={cn("px-6 py-4 font-medium text-white")}>{street.name}</td>
-                        <td className="px-6 py-4 text-white/40">{street.plan}</td>
+                        <td className="px-6 py-4 text-white/60">{street.plan}</td>
                         <td className="px-6 py-4 font-semibold text-white">{street.counted}</td>
                         <td className="px-6 py-4">
                           <span className={cn(
@@ -2237,11 +2237,11 @@ function DashboardApp() {
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Acuracidade Final</h3>
-                  <p className="text-white/40 mb-6 font-medium">Percentual após analise das Divergências</p>
+                  <p className="text-white/60 mb-6 font-medium">Percentual após analise das Divergências</p>
                   <div className="text-5xl font-black text-white mb-2">
                     {data.finalAccuracy.toFixed(2)}%
                   </div>
-                  <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Precisão</span>
+                  <span className="text-sm font-medium text-white/60 uppercase tracking-widest">Precisão</span>
                 </div>
               </div>
 
@@ -2284,11 +2284,11 @@ function DashboardApp() {
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Meta Semanal</h3>
-                  <p className="text-white/40 mb-6 font-medium">Objetivo de contagem semanal (Meta Mês / 4).</p>
+                  <p className="text-white/60 mb-6 font-medium">Objetivo de contagem semanal (Meta Mês / 4).</p>
                   <div className="text-5xl font-black text-white mb-2">
                     {data.weeklyGoalCalculated || 2852}
                   </div>
-                  <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Unidades</span>
+                  <span className="text-sm font-medium text-white/60 uppercase tracking-widest">Unidades</span>
                 </div>
 
                 <div className={cn("backdrop-blur-[2px] p-10 rounded-3xl border-4 shadow-2xl flex flex-col items-center text-center transform scale-105 z-10 transition-all duration-500", theme.contentBg, "border-white/20")}>
@@ -2308,21 +2308,21 @@ function DashboardApp() {
                     <FileSpreadsheet className="w-8 h-8 text-white" />
                   </div>
                   <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>Meta Mês</h3>
-                  <p className="text-white/40 mb-6 font-medium">Quantidade total de posições.</p>
+                  <p className="text-white/60 mb-6 font-medium">Quantidade total de posições.</p>
                   <div className="text-5xl font-black text-white mb-2">
                     {data.totalPositions || 11408}
                   </div>
-                  <span className="text-sm font-medium text-white/40 uppercase tracking-wider mb-6">Total Posições</span>
+                  <span className="text-sm font-medium text-white/60 uppercase tracking-wider mb-6">Total Posições</span>
                   
                   {/* Summary inside Meta Mês */}
                   <div className={cn("w-full pt-6 border-t flex justify-center gap-10", "border-white/20")}>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Contado</span>
+                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Contado</span>
                       <span className="text-2xl font-bold text-emerald-400">{data.totalCounted}</span>
                     </div>
                     <div className={cn("w-px h-10 self-center", "bg-white/20")} />
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Falta</span>
+                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Falta</span>
                       <span className="text-2xl font-bold text-rose-400">{data.totalPending}</span>
                     </div>
                   </div>
