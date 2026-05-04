@@ -254,6 +254,57 @@ const MetricCard = ({ title, value, icon: Icon, color, subtitle, theme }: {
 );
 
 export default function App() {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (localStorage.getItem('dashboardUnlocked') === 'true') {
+      setIsUnlocked(true);
+    }
+  }, []);
+
+  const handleUnlock = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password === 'INVENTARIO@2026') {
+      localStorage.setItem('dashboardUnlocked', 'true');
+      setErrorMessage('');
+      setIsUnlocked(true);
+    } else {
+      setErrorMessage('Senha incorreta. Tente novamente.');
+    }
+  };
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl bg-slate-900/95 backdrop-blur-xl">
+          <h1 className="text-3xl font-black mb-4 text-center">Acesso Restrito</h1>
+          <p className="text-sm text-slate-300 mb-8 text-center">Insira a senha para abrir o dashboard.</p>
+          <form onSubmit={handleUnlock} className="space-y-4">
+            <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">Senha</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-base text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              placeholder="Digite a senha"
+            />
+            {errorMessage && (
+              <p className="text-[13px] text-rose-400 font-semibold">{errorMessage}</p>
+            )}
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-950 transition hover:bg-emerald-400"
+            >
+              Desbloquear Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <DashboardApp />
@@ -739,21 +790,21 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           >
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border", theme.primary === 'blue' ? "bg-white/40 border-white/60" : "bg-blue-500/20 border-blue-500/40")}>
-                  <Box className={cn("w-8 h-8", theme.primary === 'blue' ? "text-white" : "text-blue-500")} />
+              <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all", theme.contentBg, theme.contentBorder, "bg-opacity-80")}>
+                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border", theme.primary === 'blue' ? "bg-white/60 border-white/80" : "bg-blue-500/40 border-blue-500/60")}>
+                  <Box className={cn("w-8 h-8", theme.primary === 'blue' ? "text-white" : "text-blue-600")} />
                 </div>
-                <h3 className={cn("text-xl font-bold mb-2", theme.contentTitle)}>TOTAL DE SKU´S</h3>
-                <div className={cn("text-6xl font-black mb-2", theme.contentTitle)}>
+                <h3 className={cn("text-xl font-bold mb-2 text-white", theme.contentTitle)}>TOTAL DE SKU´S</h3>
+                <div className={cn("text-6xl font-black mb-2 text-white", theme.contentTitle)}>
                   {(data.uniqueSKUCount || 0).toLocaleString()}
                 </div>
               </div>
               
-              <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all lg:col-span-2", theme.contentBg, theme.contentBorder)}>
+              <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all lg:col-span-2 bg-opacity-80", theme.contentBg, theme.contentBorder)}>
                  <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6">
                    <div className="text-left">
-                      <h2 className={cn("text-2xl font-black uppercase tracking-wider mb-1", theme.contentTitle)}>Análise de Itens</h2>
-                      <p className={cn("text-xs font-medium", theme.primary === 'blue' ? "text-blue-100/60" : "text-zinc-500")}>Filtro por SKU ou Descrição para listagem detalhada.</p>
+                      <h2 className={cn("text-2xl font-black uppercase tracking-wider mb-1 text-white", theme.contentTitle)}>Análise de Itens</h2>
+                      <p className={cn("text-xs font-medium text-white/80", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-200")}>Filtro por SKU ou Descrição para listagem detalhada.</p>
                    </div>
                    <div className="relative w-full max-w-sm">
                       <input 
@@ -774,36 +825,36 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             </div>
 
             {/* Items Table */}
-            <div className={cn("rounded-3xl border shadow-2xl overflow-hidden transition-all duration-500", theme.contentBg, theme.contentBorder)}>
+            <div className={cn("rounded-3xl border shadow-2xl overflow-hidden transition-all duration-500 bg-opacity-80", theme.contentBg, theme.contentBorder)}>
               <div className="overflow-x-auto max-h-[600px] custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-20">
-                    <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-800 border-white/20" : "bg-[#111] border-white/15")}>
-                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>SKU</th>
-                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Descrição do Produto</th>
-                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-500")}>Prazo de Validade</th>
+                    <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-900/80 border-white/30" : "bg-slate-900/80 border-white/20")}>
+                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>SKU</th>
+                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Descrição do Produto</th>
+                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Prazo de Validade</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/10">
+                  <tbody className="divide-y divide-white/15">
                     {filteredItems.slice(0, 500).map((item, idx) => (
-                      <tr key={`${item.sku}-${idx}`} className="hover:bg-white/5 transition-colors group">
-                        <td className={cn("px-6 py-4 text-xs font-bold font-mono", theme.contentTitle)}>{item.sku}</td>
-                        <td className={cn("px-6 py-4 text-xs font-medium group-hover:text-white transition-colors", theme.primary === 'blue' ? "text-blue-50" : "text-zinc-400")}>{item.description}</td>
-                        <td className={cn("px-6 py-4 text-xs font-bold", theme.primary === 'blue' ? "text-white" : "text-orange-400")}>
+                      <tr key={`${item.sku}-${idx}`} className="hover:bg-white/10 transition-colors group">
+                        <td className={cn("px-6 py-4 text-xs font-bold font-mono text-white")}>{item.sku}</td>
+                        <td className={cn("px-6 py-4 text-xs font-medium group-hover:text-white transition-colors text-white/90")}>{item.description}</td>
+                        <td className={cn("px-6 py-4 text-xs font-bold text-orange-300")}>
                           {item.shelfLifeAL}
                         </td>
                       </tr>
                     ))}
                     {filteredItems.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="px-6 py-12 text-center text-zinc-500 italic text-sm">
+                        <td colSpan={3} className="px-6 py-12 text-center text-white/50 italic text-sm">
                           Nenhum item encontrado para a pesquisa.
                         </td>
                       </tr>
                     )}
                     {filteredItems.length > 500 && (
                       <tr>
-                        <td colSpan={3} className="px-6 py-4 text-center text-zinc-500 text-[10px] font-bold uppercase tracking-widest bg-zinc-950/50">
+                        <td colSpan={3} className="px-6 py-4 text-center text-white/60 text-[10px] font-bold uppercase tracking-widest bg-slate-950/70">
                           Mostrando os primeiros 500 itens de {filteredItems.length}. Use a pesquisa para filtrar.
                         </td>
                       </tr>
@@ -822,41 +873,41 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             className="space-y-6"
           >
             {/* FEFO Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-amber-500/25 rounded-2xl flex items-center justify-center mb-4 border border-amber-500/40">
-                  <AlertCircle className="w-6 h-6 text-amber-500" />
+            <div className="grid grid-cols-1 gap-6">
+              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                <div className="w-16 h-16 bg-amber-500/40 rounded-3xl flex items-center justify-center mb-5 border border-amber-500/70">
+                  <AlertCircle className="w-8 h-8 text-amber-400" />
                 </div>
-                <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>FEFO</h3>
-                <p className="text-black text-[8px] mb-3 uppercase font-bold tracking-wider text-center">Vencimento entre 20 e 60 dias</p>
-                <div className={cn("text-5xl font-black mb-1 text-center", theme.contentTitle)}>
+                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">FEFO</h3>
+                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento entre 20 e 60 dias</p>
+                <div className="text-7xl font-black mb-4 text-center text-amber-300">
                   {(data.fefoCount || 0).toLocaleString()}
                 </div>
-                <CategoryList category="FEFO" color="text-amber-500" />
+                <CategoryList category="FEFO" color="text-amber-200" />
               </div>
 
-              <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-blue-500/25 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/40">
-                  <Info className="w-6 h-6 text-blue-500" />
+              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                <div className="w-16 h-16 bg-blue-500/40 rounded-3xl flex items-center justify-center mb-5 border border-blue-500/70">
+                  <Info className="w-8 h-8 text-blue-400" />
                 </div>
-                <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>PRÉ-FEFO</h3>
-                <p className="text-black text-[8px] mb-3 uppercase font-bold tracking-wider text-center">Vencimento entre 61 e 70 dias</p>
-                <div className={cn("text-5xl font-black mb-1 text-center", theme.contentTitle)}>
+                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">PRÉ-FEFO</h3>
+                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento entre 61 e 70 dias</p>
+                <div className="text-7xl font-black mb-4 text-center text-blue-300">
                   {(data.preFefoCount || 0).toLocaleString()}
                 </div>
-                <CategoryList category="PRÉ-FEFO" color="text-blue-500" />
+                <CategoryList category="PRÉ-FEFO" color="text-blue-200" />
               </div>
 
-              <div className={cn("p-6 rounded-3xl border shadow-xl flex flex-col items-center transition-all", theme.contentBg, theme.contentBorder)}>
-                <div className="w-12 h-12 bg-rose-500/25 rounded-2xl flex items-center justify-center mb-4 border border-rose-500/40">
-                  <AlertCircle className="w-6 h-6 text-rose-500 animate-pulse" />
+              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                <div className="w-16 h-16 bg-rose-500/40 rounded-3xl flex items-center justify-center mb-5 border border-rose-500/70">
+                  <AlertCircle className="w-8 h-8 text-rose-400 animate-pulse" />
                 </div>
-                <h3 className={cn("text-xs font-black uppercase tracking-[0.2em] mb-1 text-center", theme.contentText)}>PERDA</h3>
-                <p className="text-black text-[8px] mb-3 uppercase font-bold tracking-wider text-center">Vencimento em menos de 20 dias</p>
-                <div className={cn("text-5xl font-black mb-1 text-rose-500 text-center")}>
+                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">PERDA</h3>
+                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento em menos de 20 dias</p>
+                <div className="text-7xl font-black mb-4 text-center text-rose-300">
                   {(data.perdaCount || 0).toLocaleString()}
                 </div>
-                <CategoryList category="PERDA" color="text-rose-500" />
+                <CategoryList category="PERDA" color="text-rose-200" />
               </div>
             </div>
           </motion.div>
