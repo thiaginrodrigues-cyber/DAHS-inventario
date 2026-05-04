@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback, useEffect, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useCallback, useEffect, useRef, ErrorInfo, ReactNode } from 'react';
 import * as XLSX from 'xlsx';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -1218,6 +1218,7 @@ function DashboardApp() {
   const [uploading, setUploading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [occupancyView, setOccupancyView] = useState<'dashboard' | 'analitico'>('analitico');
+  const latestUpdateRef = useRef<string | null>(null);
 
   const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1tnl6iGFhO87pd0wYPnmOVoCSXJp10xwvSqagHrwTr-s/export?format=xlsx';
 
@@ -1687,19 +1688,18 @@ function DashboardApp() {
       const metrics = await processWorkbook(wb);
       const nowIso = new Date().toISOString();
 
-      // Keep the dashboard usable even if Firestore write is blocked.
-      setData({
+      const newData = {
         ...metrics,
         updatedAt: nowIso,
         updatedBy: 'Google Sheets Sync'
-      });
+      } as DashboardMetrics;
+
+      // Keep the dashboard usable even if Firestore write is blocked.
+      setData(newData);
+      latestUpdateRef.current = nowIso;
 
       const docRef = doc(db, 'dashboard', 'latest');
-      await setDoc(docRef, {
-        ...metrics,
-        updatedAt: nowIso,
-        updatedBy: 'Google Sheets Sync'
-      });
+      await setDoc(docRef, newData);
       
       setLastSync(new Date());
     } catch (error) {
@@ -1713,8 +1713,17 @@ function DashboardApp() {
   useEffect(() => {
     const docRef = doc(db, 'dashboard', 'latest');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setData(docSnap.data() as DashboardMetrics);
+      if (!docSnap.exists()) return;
+
+      const snapshotData = docSnap.data() as DashboardMetrics;
+      const snapshotUpdatedAt = typeof snapshotData.updatedAt === 'string' ? snapshotData.updatedAt : null;
+      const localUpdatedAt = latestUpdateRef.current;
+
+      if (!snapshotUpdatedAt || !localUpdatedAt || new Date(snapshotUpdatedAt) >= new Date(localUpdatedAt)) {
+        setData(snapshotData);
+        if (snapshotUpdatedAt) {
+          latestUpdateRef.current = snapshotUpdatedAt;
+        }
       }
     }, (error) => {
       // Read can fail without auth; dashboard now uses direct Sheets sync as fallback.
