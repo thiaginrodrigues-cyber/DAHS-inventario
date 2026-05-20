@@ -719,95 +719,147 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const FefoList = () => {
-    const list = data.items
-      .filter(item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > 10)
-      .sort((a, b) => {
-        const aFuture = (a.daysRemaining ?? 0) > 60;
-        const bFuture = (b.daysRemaining ?? 0) > 60;
-        if (aFuture && bFuture) return (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999);
-        if (aFuture && !bFuture) return -1;
-        if (!aFuture && bFuture) return 1;
-        return (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999);
-      });
+  const fefoEligible = React.useMemo(
+    () => data.items.filter(
+      item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > 10
+    ),
+    [data.items]
+  );
 
-    return (
-      <div className="w-full mt-6 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm">
-        <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 z-10">
-              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}> 
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200")}>SKU</th>
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 text-right")}>Entrada FEFO</th>
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 text-right")}>Vencimento</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {list.length > 0 ? (
-                list.map((item, idx) => {
-                  const isFuture = (item.daysRemaining ?? 0) > 60;
-                  const isUpcoming = isFuture && (item.daysUntilFefo ?? 999) <= 7;
-                  const isActive = !isFuture;
-                  return (
-                    <tr
-                      key={`${item.sku}-${idx}`}
-                      className={cn(
-                        "transition-colors group",
-                        isUpcoming
-                          ? "bg-amber-500/20 border-l-4 border-amber-400 hover:bg-amber-500/30"
-                          : "bg-slate-900/70 hover:bg-slate-800/80"
+  const fefoProjection = React.useMemo(
+    () => [...fefoEligible]
+      .filter(item => (item.daysRemaining ?? 0) > 60)
+      .sort((a, b) => (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999)),
+    [fefoEligible]
+  );
+
+  const fefoActive = React.useMemo(
+    () => [...fefoEligible]
+      .filter(item => (item.daysRemaining ?? 0) <= 60)
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
+    [fefoEligible]
+  );
+
+  const fefoUpcomingAlert = React.useMemo(
+    () => fefoProjection.filter(item => (item.daysUntilFefo ?? 999) <= 7),
+    [fefoProjection]
+  );
+
+  const FefoTableSection = ({
+    title,
+    items,
+    positionLabel,
+    getPosition,
+  }: {
+    title: string;
+    items: InventarioGTSKU[];
+    positionLabel: string;
+    getPosition: (index: number) => number;
+  }) => (
+    <div className="flex flex-col min-h-0">
+      <div className="px-5 py-3 border-b border-white/10 bg-amber-950/40">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-100">{title}</h4>
+        <p className="text-[10px] text-amber-200/70 mt-0.5">{items.length} produto{items.length !== 1 ? 's' : ''}</p>
+      </div>
+      <table className="w-full text-left border-collapse">
+        <thead className="sticky top-0 z-10">
+          <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 w-16 text-center">{positionLabel}</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">SKU</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Entrada FEFO</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Vencimento</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/10">
+          {items.length > 0 ? (
+            items.map((item, idx) => {
+              const isUpcoming = (item.daysUntilFefo ?? 999) <= 7;
+              const isFuture = (item.daysRemaining ?? 0) > 60;
+              return (
+                <tr
+                  key={`${title}-${item.sku}-${idx}`}
+                  className={cn(
+                    "transition-colors group",
+                    isUpcoming
+                      ? "bg-amber-500/25 border-l-4 border-amber-400 hover:bg-amber-500/35"
+                      : "bg-slate-900/70 hover:bg-slate-800/80"
+                  )}
+                >
+                  <td className="px-4 py-4 text-center align-top">
+                    <span className="inline-flex min-w-[2rem] justify-center text-lg font-black font-mono text-amber-300">
+                      {getPosition(idx)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                      {isUpcoming && isFuture && (
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/50 text-amber-50 border border-amber-300/60 animate-pulse">
+                          Alerta
+                        </span>
                       )}
-                    >
-                      <td className="px-4 py-4 align-top">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
-                          {isUpcoming && (
-                            <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/40 text-amber-100 border border-amber-400/50">
-                              Próximo
-                            </span>
-                          )}
-                          {isActive && (
-                            <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-200 border border-amber-500/40">
-                              Em FEFO
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-amber-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
-                      </td>
-                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-[12px] font-black font-mono text-amber-200">
-                          {item.fefoEntryDate}
-                        </span>
-                        {isFuture && item.daysUntilFefo !== null && (
-                          <div className="text-[10px] text-amber-300/80 font-bold mt-1">
-                            em {item.daysUntilFefo}d
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-[12px] font-black font-mono text-amber-200">
-                          {item.daysRemaining}d
-                        </span>
-                        <div className="text-[10px] text-slate-300 font-bold mt-1">
-                          {item.expirationDate}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-3 py-6 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
-                    Sem itens
+                    </div>
+                    <div className="text-xs text-amber-200/90 mt-1 line-clamp-2">{item.description}</div>
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-amber-200">{item.fefoEntryDate}</span>
+                    {isFuture && item.daysUntilFefo !== null && (
+                      <div className="text-xs text-amber-300 font-bold mt-1">em {item.daysUntilFefo}d</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-amber-200">{item.daysRemaining}d</span>
+                    <div className="text-xs text-slate-300 font-bold mt-1">{item.expirationDate}</div>
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
+                Nenhum item nesta faixa
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const FefoProjectionView = () => (
+    <div className="w-full mt-4 flex flex-col gap-4">
+      {fefoUpcomingAlert.length > 0 && (
+        <div className="rounded-2xl border border-amber-400/60 bg-amber-500/20 px-5 py-4 flex items-start gap-3 shadow-lg shadow-amber-900/20">
+          <AlertCircle className="w-6 h-6 text-amber-300 shrink-0 mt-0.5 animate-pulse" />
+          <div className="min-w-0">
+            <p className="text-sm font-black uppercase tracking-wider text-amber-100">
+              Alerta — {fefoUpcomingAlert.length} produto{fefoUpcomingAlert.length !== 1 ? 's' : ''} entra{fefoUpcomingAlert.length === 1 ? '' : 'm'} no FEFO em até 7 dias
+            </p>
+            <p className="text-xs text-amber-200/90 mt-1 truncate">
+              Próximo: {fefoUpcomingAlert[0]?.sku} — entrada {fefoUpcomingAlert[0]?.fefoEntryDate}
+              {fefoUpcomingAlert.length > 1 ? ` (+${fefoUpcomingAlert.length - 1})` : ''}
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(70vh,640px)]">
+        <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
+          <FefoTableSection
+            title="Projeção — próximos a entrar no FEFO"
+            items={fefoProjection}
+            positionLabel="Pos."
+            getPosition={(idx) => idx + 1}
+          />
+          <FefoTableSection
+            title="Já em FEFO"
+            items={fefoActive}
+            positionLabel="Pos."
+            getPosition={(idx) => idx + 1}
+          />
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   const PerdaList = () => {
     const list = data.items
@@ -815,14 +867,15 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999));
 
     return (
-      <div className="w-full mt-6 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm">
-        <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
+      <div className="w-full mt-4 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(55vh,480px)]">
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-10">
-              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}> 
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200")}>SKU</th>
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200 text-right")}>Entrada PERDA</th>
-                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200 text-right")}>Vencimento</th>
+              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
+                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-16 text-center">Pos.</th>
+                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
+                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
+                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Vencimento</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -839,29 +892,28 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                           : "bg-slate-900/70 hover:bg-slate-800/80"
                       )}
                     >
+                      <td className="px-4 py-4 text-center align-top">
+                        <span className="inline-flex min-w-[2rem] justify-center text-lg font-black font-mono text-rose-300">
+                          {idx + 1}
+                        </span>
+                      </td>
                       <td className="px-4 py-4 align-top">
-                        <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
-                        <div className="text-[10px] text-rose-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
+                        <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                        <div className="text-xs text-rose-200/90 mt-1 line-clamp-2">{item.description}</div>
                       </td>
                       <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-[12px] font-black font-mono text-rose-200">
-                          {item.perdaEntryDate}
-                        </span>
+                        <span className="text-sm font-black font-mono text-rose-200">{item.perdaEntryDate}</span>
                       </td>
                       <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-[12px] font-black font-mono text-rose-200">
-                          {item.daysRemaining}d
-                        </span>
-                        <div className="text-[10px] text-slate-300 font-bold mt-1">
-                          {item.expirationDate}
-                        </div>
+                        <span className="text-sm font-black font-mono text-rose-200">{item.daysRemaining}d</span>
+                        <div className="text-xs text-slate-300 font-bold mt-1">{item.expirationDate}</div>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={3} className="px-3 py-6 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
+                  <td colSpan={4} className="px-4 py-10 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
                     Sem itens
                   </td>
                 </tr>
@@ -996,26 +1048,37 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           >
             {/* FEFO Metrics */}
             <div className="grid grid-cols-1 gap-6">
-              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
-                <div className="w-16 h-16 bg-amber-500/40 rounded-3xl flex items-center justify-center mb-5 border border-amber-500/70">
-                  <AlertCircle className="w-8 h-8 text-amber-400" />
+              <div className={cn("p-8 lg:p-10 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-amber-500/40 rounded-2xl flex items-center justify-center border border-amber-500/70 shrink-0">
+                      <AlertCircle className="w-7 h-7 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
+                      <p className="text-xs text-amber-200/80 mt-1">
+                        {fefoProjection.length} na fila de entrada · {fefoActive.length} em FEFO
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-5xl sm:text-6xl font-black text-amber-300 tabular-nums">
+                    {(data.fefoCount || 0).toLocaleString()}
+                  </div>
                 </div>
-                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">FEFO</h3>
-                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-md">Entra no FEFO 60 dias antes do vencimento — próximos ao FEFO aparecem primeiro</p>
-                <div className="text-7xl font-black mb-4 text-center text-amber-300">
-                  {(data.fefoCount || 0).toLocaleString()}
-                </div>
-                <FefoList />
+                <FefoProjectionView />
               </div>
 
-              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
-                <div className="w-16 h-16 bg-rose-500/40 rounded-3xl flex items-center justify-center mb-5 border border-rose-500/70">
-                  <AlertCircle className="w-8 h-8 text-rose-400 animate-pulse" />
-                </div>
-                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">PERDA</h3>
-                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-md">Entra em perda com 10 dias para vencer</p>
-                <div className="text-7xl font-black mb-4 text-center text-rose-300">
-                  {(data.perdaCount || 0).toLocaleString()}
+              <div className={cn("p-8 lg:p-10 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-rose-500/40 rounded-2xl flex items-center justify-center border border-rose-500/70 shrink-0">
+                      <AlertCircle className="w-7 h-7 text-rose-400 animate-pulse" />
+                    </div>
+                    <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">PERDA</h3>
+                  </div>
+                  <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
+                    {(data.perdaCount || 0).toLocaleString()}
+                  </div>
                 </div>
                 <PerdaList />
               </div>
