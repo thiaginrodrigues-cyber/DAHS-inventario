@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+sync-output.json
+firebase-service-account.json

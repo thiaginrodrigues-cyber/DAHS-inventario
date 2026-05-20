@@ -182,16 +182,31 @@ interface InventarioGTSKU {
   expirationDate: string;
   shelfLifeAL: string | number;
   daysRemaining: number | null;
-  category: 'FEFO' | 'PRÉ-FEFO' | 'PERDA' | 'NORMAL';
+  category: 'FEFO' | 'PERDA' | 'NORMAL';
+  fefoEntryDate: string | null;
+  perdaEntryDate: string | null;
+  daysUntilFefo: number | null;
 }
 
 interface InventarioGTData {
   items: InventarioGTSKU[];
   uniqueSKUCount: number;
   fefoCount: number;
-  preFefoCount: number;
   perdaCount: number;
 }
+
+const addDays = (date: Date, delta: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + delta);
+  return result;
+};
+
+const formatDateBR = (date: Date, fullYear = false): string => {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = fullYear ? String(date.getFullYear()) : String(date.getFullYear()).slice(-2);
+  return `${d}/${m}/${y}`;
+};
 
 interface DashboardMetrics {
   totalPositions: number;
@@ -704,10 +719,17 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const CategoryList = ({ category, color }: { category: 'FEFO' | 'PRÉ-FEFO' | 'PERDA', color: string }) => {
+  const FefoList = () => {
     const list = data.items
-      .filter(item => item.category === category)
-      .sort((a, b) => (a.daysRemaining || 999) - (b.daysRemaining || 999));
+      .filter(item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > 10)
+      .sort((a, b) => {
+        const aFuture = (a.daysRemaining ?? 0) > 60;
+        const bFuture = (b.daysRemaining ?? 0) > 60;
+        if (aFuture && bFuture) return (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999);
+        if (aFuture && !bFuture) return -1;
+        if (!aFuture && bFuture) return 1;
+        return (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999);
+      });
 
     return (
       <div className="w-full mt-6 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm">
@@ -716,30 +738,130 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             <thead className="sticky top-0 z-10">
               <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}> 
                 <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200")}>SKU</th>
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 text-right")}>Entrada FEFO</th>
                 <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 text-right")}>Vencimento</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
               {list.length > 0 ? (
-                list.map((item, idx) => (
-                  <tr key={`${item.sku}-${idx}`} className="bg-slate-900/70 hover:bg-slate-800/80 transition-colors group">
-                    <td className="px-4 py-4 align-top">
-                      <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
-                      <div className="text-[10px] text-amber-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
-                    </td>
-                    <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                      <span className={cn("text-[12px] font-black font-mono", color)}>
-                        {item.daysRemaining}d
-                      </span>
-                      <div className="text-[10px] text-slate-300 font-bold mt-1">
-                        {item.expirationDate}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                list.map((item, idx) => {
+                  const isFuture = (item.daysRemaining ?? 0) > 60;
+                  const isUpcoming = isFuture && (item.daysUntilFefo ?? 999) <= 7;
+                  const isActive = !isFuture;
+                  return (
+                    <tr
+                      key={`${item.sku}-${idx}`}
+                      className={cn(
+                        "transition-colors group",
+                        isUpcoming
+                          ? "bg-amber-500/20 border-l-4 border-amber-400 hover:bg-amber-500/30"
+                          : "bg-slate-900/70 hover:bg-slate-800/80"
+                      )}
+                    >
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                          {isUpcoming && (
+                            <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/40 text-amber-100 border border-amber-400/50">
+                              Próximo
+                            </span>
+                          )}
+                          {isActive && (
+                            <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-200 border border-amber-500/40">
+                              Em FEFO
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-amber-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
+                      </td>
+                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                        <span className="text-[12px] font-black font-mono text-amber-200">
+                          {item.fefoEntryDate}
+                        </span>
+                        {isFuture && item.daysUntilFefo !== null && (
+                          <div className="text-[10px] text-amber-300/80 font-bold mt-1">
+                            em {item.daysUntilFefo}d
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                        <span className="text-[12px] font-black font-mono text-amber-200">
+                          {item.daysRemaining}d
+                        </span>
+                        <div className="text-[10px] text-slate-300 font-bold mt-1">
+                          {item.expirationDate}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={2} className="px-3 py-6 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
+                  <td colSpan={3} className="px-3 py-6 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
+                    Sem itens
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const PerdaList = () => {
+    const list = data.items
+      .filter(item => item.category === 'PERDA')
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999));
+
+    return (
+      <div className="w-full mt-6 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm">
+        <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 z-10">
+              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}> 
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200")}>SKU</th>
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200 text-right")}>Entrada PERDA</th>
+                <th className={cn("px-4 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-rose-200 text-right")}>Vencimento</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {list.length > 0 ? (
+                list.map((item, idx) => {
+                  const isUrgent = (item.daysRemaining ?? 999) <= 3;
+                  return (
+                    <tr
+                      key={`${item.sku}-${idx}`}
+                      className={cn(
+                        "transition-colors group",
+                        isUrgent
+                          ? "bg-rose-500/25 border-l-4 border-rose-400 hover:bg-rose-500/35"
+                          : "bg-slate-900/70 hover:bg-slate-800/80"
+                      )}
+                    >
+                      <td className="px-4 py-4 align-top">
+                        <div className={cn("text-[12px] font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                        <div className="text-[10px] text-rose-200/90 truncate max-w-[220px] mt-1">{item.description}</div>
+                      </td>
+                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                        <span className="text-[12px] font-black font-mono text-rose-200">
+                          {item.perdaEntryDate}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                        <span className="text-[12px] font-black font-mono text-rose-200">
+                          {item.daysRemaining}d
+                        </span>
+                        <div className="text-[10px] text-slate-300 font-bold mt-1">
+                          {item.expirationDate}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={3} className="px-3 py-6 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
                     Sem itens
                   </td>
                 </tr>
@@ -879,23 +1001,11 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                   <AlertCircle className="w-8 h-8 text-amber-400" />
                 </div>
                 <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">FEFO</h3>
-                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento entre 20 e 60 dias</p>
+                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-md">Entra no FEFO 60 dias antes do vencimento — próximos ao FEFO aparecem primeiro</p>
                 <div className="text-7xl font-black mb-4 text-center text-amber-300">
                   {(data.fefoCount || 0).toLocaleString()}
                 </div>
-                <CategoryList category="FEFO" color="text-amber-200" />
-              </div>
-
-              <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
-                <div className="w-16 h-16 bg-blue-500/40 rounded-3xl flex items-center justify-center mb-5 border border-blue-500/70">
-                  <Info className="w-8 h-8 text-blue-400" />
-                </div>
-                <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">PRÉ-FEFO</h3>
-                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento entre 61 e 70 dias</p>
-                <div className="text-7xl font-black mb-4 text-center text-blue-300">
-                  {(data.preFefoCount || 0).toLocaleString()}
-                </div>
-                <CategoryList category="PRÉ-FEFO" color="text-blue-200" />
+                <FefoList />
               </div>
 
               <div className={cn("p-10 min-h-[340px] rounded-3xl border shadow-2xl flex flex-col items-center transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
@@ -903,11 +1013,11 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                   <AlertCircle className="w-8 h-8 text-rose-400 animate-pulse" />
                 </div>
                 <h3 className="text-base font-black uppercase tracking-[0.2em] mb-2 text-center text-white">PERDA</h3>
-                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-xs">Vencimento em menos de 20 dias</p>
+                <p className="text-white text-sm mb-4 uppercase font-bold tracking-wider text-center max-w-md">Entra em perda com 10 dias para vencer</p>
                 <div className="text-7xl font-black mb-4 text-center text-rose-300">
                   {(data.perdaCount || 0).toLocaleString()}
                 </div>
-                <CategoryList category="PERDA" color="text-rose-200" />
+                <PerdaList />
               </div>
             </div>
           </motion.div>
@@ -1262,20 +1372,9 @@ const OccupancyDashboard = ({ data, theme, activeView }: { data?: OccupancyData,
   );
 };
 
-function DashboardApp() {
-  const [data, setData] = useState<DashboardMetrics | null>(null);
-  const [activeModule, setActiveModule] = useState<Module>('INVENTARIO CÍCLICO');
-  const [activeTab, setActiveTab] = useState<'overview' | 'streets' | 'errors' | 'daily'>('overview');
-  const [uploading, setUploading] = useState(false);
-  const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [occupancyView, setOccupancyView] = useState<'dashboard' | 'analitico'>('analitico');
-  const latestUpdateRef = useRef<string | null>(null);
+export const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1tnl6iGFhO87pd0wYPnmOVoCSXJp10xwvSqagHrwTr-s/export?format=xlsx';
 
-  const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1tnl6iGFhO87pd0wYPnmOVoCSXJp10xwvSqagHrwTr-s/export?format=xlsx';
-
-  const isAdmin = true;
-
-  const processWorkbook = useCallback(async (wb: XLSX.WorkBook) => {
+export async function processWorkbook(wb: XLSX.WorkBook) {
     const mainSheetName = wb.SheetNames.find(n => 
       n.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("CONTAGEM_CICLICA_1_GIRO")
     ) || wb.SheetNames[0];
@@ -1584,7 +1683,6 @@ function DashboardApp() {
       const items: InventarioGTSKU[] = [];
       const uniqueSKUsSet = new Set<string>();
       let fefoCount = 0;
-      let preFefoCount = 0;
       let perdaCount = 0;
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -1606,32 +1704,33 @@ function DashboardApp() {
         const rawDate = row[68];
         
         let daysRemaining: number | null = null;
-        let category: 'FEFO' | 'PRÉ-FEFO' | 'PERDA' | 'NORMAL' = 'NORMAL';
+        let category: 'FEFO' | 'PERDA' | 'NORMAL' = 'NORMAL';
+        let fefoEntryDate: string | null = null;
+        let perdaEntryDate: string | null = null;
+        let daysUntilFefo: number | null = null;
 
         const expDate = parseSheetDate(rawDate);
         if (expDate) {
-          // Format as DD/MM/YY
-          const d = String(expDate.getDate()).padStart(2, '0');
-          const m = String(expDate.getMonth() + 1).padStart(2, '0');
-          const y = String(expDate.getFullYear()).slice(-2);
-          expirationDate = `${d}/${m}/${y}`;
+          expirationDate = formatDateBR(expDate, true);
 
           const diffTime = expDate.getTime() - now.getTime();
           daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
-          // FEFO/PRÉ-FEFO/PERDA rules only apply if Estado is NORMAL and Area is PICKING or PULMAO
           const isRuleApplicable = estado === 'NORMAL' && (area === 'PICKING' || area === 'PULMAO');
 
           if (isRuleApplicable) {
-            if (daysRemaining < 20) {
+            fefoEntryDate = formatDateBR(addDays(expDate, -60), true);
+            perdaEntryDate = formatDateBR(addDays(expDate, -10), true);
+            daysUntilFefo = daysRemaining - 60;
+
+            if (daysRemaining <= 10) {
               category = 'PERDA';
               perdaCount++;
-            } else if (daysRemaining <= 60) {
-              category = 'FEFO';
+            } else {
               fefoCount++;
-            } else if (daysRemaining <= 70) {
-              category = 'PRÉ-FEFO';
-              preFefoCount++;
+              if (daysRemaining <= 60) {
+                category = 'FEFO';
+              }
             }
           }
         } else if (rawDate !== undefined && rawDate !== null) {
@@ -1646,7 +1745,10 @@ function DashboardApp() {
             expirationDate,
             shelfLifeAL,
             daysRemaining,
-            category
+            category,
+            fefoEntryDate,
+            perdaEntryDate,
+            daysUntilFefo
           });
         }
       }
@@ -1655,7 +1757,6 @@ function DashboardApp() {
         items,
         uniqueSKUCount: uniqueSKUsSet.size,
         fefoCount,
-        preFefoCount,
         perdaCount
       };
     }
@@ -1724,7 +1825,18 @@ function DashboardApp() {
     }
 
     return metrics;
-  }, []);
+}
+
+function DashboardApp() {
+  const [data, setData] = useState<DashboardMetrics | null>(null);
+  const [activeModule, setActiveModule] = useState<Module>('INVENTARIO CÍCLICO');
+  const [activeTab, setActiveTab] = useState<'overview' | 'streets' | 'errors' | 'daily'>('overview');
+  const [uploading, setUploading] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [occupancyView, setOccupancyView] = useState<'dashboard' | 'analitico'>('analitico');
+  const latestUpdateRef = useRef<string | null>(null);
+
+  const isAdmin = true;
 
   const syncGoogleSheets = useCallback(async () => {
     if (!isAdmin) return;

@@ -1,0 +1,18 @@
+---
+description: Após alterações no projeto, publicar na Vercel via push em main
+alwaysApply: true
+---
+
+# Deploy na Vercel após mudanças
+
+Quando o usuário pedir alterações neste dashboard (ou ao concluir uma tarefa de implementação):
+
+1. Garantir que o código compila (`npm run lint` e/ou `npm run build` se fizer sentido).
+2. **Não** commitar arquivos sensíveis (`.env*`, `firebase-service-account.json`, `sync-output.json`).
+3. Fazer **commit** com mensagem clara em português ou inglês (estilo do repositório).
+4. Dar **push** para `origin/main` — o workflow `.github/workflows/deploy-vercel.yml` faz deploy automático na Vercel em produção.
+5. Informar ao usuário que o deploy foi disparado e que a Vercel leva alguns minutos.
+
+Se o push falhar (permissões, conflitos), explicar o bloqueio e o que o usuário precisa fazer (ex.: resolver conflito, configurar credenciais).
+
+Não usar `vercel deploy` localmente a menos que o push em `main` não seja possível e o usuário peça deploy manual explícito.
