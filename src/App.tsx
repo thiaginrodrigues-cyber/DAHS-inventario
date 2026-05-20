@@ -726,31 +726,36 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const fefoEligible = React.useMemo(
-    () => data.items.filter(
-      item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > PERDA_ENTRY_DAYS
-    ),
+  const fefoProjection = React.useMemo(
+    () => data.items
+      .filter(item => {
+        const days = item.daysRemaining ?? 0;
+        return (
+          item.fefoEntryDate !== null &&
+          item.daysUntilFefo !== null &&
+          days > FEFO_ENTRY_DAYS &&
+          item.daysUntilFefo <= FEFO_UPCOMING_ALERT_DAYS
+        );
+      })
+      .sort((a, b) => (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999)),
     [data.items]
   );
 
-  const fefoProjection = React.useMemo(
-    () => [...fefoEligible]
-      .filter(item => (item.daysRemaining ?? 0) > FEFO_ENTRY_DAYS)
-      .sort((a, b) => (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999)),
-    [fefoEligible]
-  );
-
   const fefoActive = React.useMemo(
-    () => [...fefoEligible]
-      .filter(item => (item.daysRemaining ?? 0) <= FEFO_ENTRY_DAYS)
+    () => data.items
+      .filter(item => {
+        const days = item.daysRemaining ?? 0;
+        return (
+          item.fefoEntryDate !== null &&
+          days > PERDA_ENTRY_DAYS &&
+          days <= FEFO_ENTRY_DAYS
+        );
+      })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
-    [fefoEligible]
+    [data.items]
   );
 
-  const fefoUpcomingAlert = React.useMemo(
-    () => fefoProjection.filter(item => (item.daysUntilFefo ?? 999) <= FEFO_UPCOMING_ALERT_DAYS),
-    [fefoProjection]
-  );
+  const fefoUpcomingAlert = fefoProjection;
 
   const FefoTableSection = ({
     title,
@@ -849,16 +854,16 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           </div>
         </div>
       )}
-      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(70vh,640px)]">
+      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col max-h-[min(65vh,560px)]">
         <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
           <FefoTableSection
-            title="Projeção — próximos a entrar no FEFO"
+            title={`Próximos ao FEFO (entrada em até ${FEFO_UPCOMING_ALERT_DAYS} dias)`}
             items={fefoProjection}
             positionLabel="Pos."
             getPosition={(idx) => idx + 1}
           />
           <FefoTableSection
-            title="Já em FEFO"
+            title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
             items={fefoActive}
             positionLabel="Pos."
             getPosition={(idx) => idx + 1}
@@ -868,31 +873,29 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     </div>
   );
 
-  const perdaEligible = React.useMemo(
-    () => data.items.filter(
-      item => item.perdaEntryDate !== null && item.daysRemaining !== null
-    ),
+  const perdaProjection = React.useMemo(
+    () => data.items
+      .filter(item => {
+        const days = item.daysRemaining ?? 0;
+        return (
+          item.perdaEntryDate !== null &&
+          item.daysUntilPerda !== null &&
+          days > PERDA_ENTRY_DAYS &&
+          item.daysUntilPerda <= PERDA_UPCOMING_ALERT_DAYS
+        );
+      })
+      .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
     [data.items]
   );
 
-  const perdaProjection = React.useMemo(
-    () => [...perdaEligible]
-      .filter(item => (item.daysRemaining ?? 0) > PERDA_ENTRY_DAYS)
-      .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
-    [perdaEligible]
-  );
-
   const perdaActive = React.useMemo(
-    () => [...perdaEligible]
-      .filter(item => (item.daysRemaining ?? 0) <= PERDA_ENTRY_DAYS)
+    () => data.items
+      .filter(item => item.perdaEntryDate !== null && (item.daysRemaining ?? 999) <= PERDA_ENTRY_DAYS)
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
-    [perdaEligible]
+    [data.items]
   );
 
-  const perdaUpcomingAlert = React.useMemo(
-    () => perdaProjection.filter(item => (item.daysUntilPerda ?? 999) <= PERDA_UPCOMING_ALERT_DAYS),
-    [perdaProjection]
-  );
+  const perdaUpcomingAlert = perdaProjection;
 
   const PerdaTableSection = ({
     title,
@@ -992,15 +995,15 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           </div>
         </div>
       )}
-      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(70vh,640px)]">
+      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col max-h-[min(65vh,560px)]">
         <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
           <PerdaTableSection
-            title="Projeção — próximos a entrar em PERDA"
+            title={`Próximos à PERDA (entrada em até ${PERDA_UPCOMING_ALERT_DAYS} dias)`}
             items={perdaProjection}
             getPosition={(idx) => idx + 1}
           />
           <PerdaTableSection
-            title="Já em PERDA"
+            title={`Em PERDA (até ${PERDA_ENTRY_DAYS} dias para vencer)`}
             items={perdaActive}
             getPosition={(idx) => idx + 1}
           />
@@ -1141,12 +1144,12 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <div>
                       <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
                       <p className="text-xs text-amber-200/80 mt-1">
-                        Regra: {FEFO_ENTRY_DAYS} dias para vencer · {fefoProjection.length} na fila · {fefoActive.length} em FEFO
+                        {fefoProjection.length} próximo{fefoProjection.length !== 1 ? 's' : ''} · {fefoActive.length} em FEFO
                       </p>
                     </div>
                   </div>
                   <div className="text-5xl sm:text-6xl font-black text-amber-300 tabular-nums">
-                    {(data.fefoCount || 0).toLocaleString()}
+                    {(fefoProjection.length + fefoActive.length).toLocaleString()}
                   </div>
                 </div>
                 <FefoProjectionView />
@@ -1161,12 +1164,12 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <div>
                       <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
                       <p className="text-xs text-rose-200/80 mt-1">
-                        Regra: {PERDA_ENTRY_DAYS} dias para vencer · {perdaProjection.length} na fila · {perdaActive.length} em PERDA
+                        {perdaProjection.length} próximo{perdaProjection.length !== 1 ? 's' : ''} · {perdaActive.length} em PERDA
                       </p>
                     </div>
                   </div>
                   <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
-                    {(data.perdaCount || 0).toLocaleString()}
+                    {(perdaProjection.length + perdaActive.length).toLocaleString()}
                   </div>
                 </div>
                 <PerdaProjectionView />
