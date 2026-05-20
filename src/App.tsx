@@ -196,6 +196,12 @@ interface InventarioGTData {
   perdaCount: number;
 }
 
+/** Dias restantes até o vencimento para entrar em cada faixa */
+const FEFO_ENTRY_DAYS = 60;
+const PERDA_ENTRY_DAYS = 10;
+const FEFO_UPCOMING_ALERT_DAYS = 7;
+const PERDA_UPCOMING_ALERT_DAYS = 10;
+
 const addDays = (date: Date, delta: number): Date => {
   const result = new Date(date);
   result.setDate(result.getDate() + delta);
@@ -722,27 +728,27 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
 
   const fefoEligible = React.useMemo(
     () => data.items.filter(
-      item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > 10
+      item => item.fefoEntryDate !== null && item.daysRemaining !== null && item.daysRemaining > PERDA_ENTRY_DAYS
     ),
     [data.items]
   );
 
   const fefoProjection = React.useMemo(
     () => [...fefoEligible]
-      .filter(item => (item.daysRemaining ?? 0) > 60)
+      .filter(item => (item.daysRemaining ?? 0) > FEFO_ENTRY_DAYS)
       .sort((a, b) => (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999)),
     [fefoEligible]
   );
 
   const fefoActive = React.useMemo(
     () => [...fefoEligible]
-      .filter(item => (item.daysRemaining ?? 0) <= 60)
+      .filter(item => (item.daysRemaining ?? 0) <= FEFO_ENTRY_DAYS)
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [fefoEligible]
   );
 
   const fefoUpcomingAlert = React.useMemo(
-    () => fefoProjection.filter(item => (item.daysUntilFefo ?? 999) <= 7),
+    () => fefoProjection.filter(item => (item.daysUntilFefo ?? 999) <= FEFO_UPCOMING_ALERT_DAYS),
     [fefoProjection]
   );
 
@@ -774,8 +780,8 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
         <tbody className="divide-y divide-white/10">
           {items.length > 0 ? (
             items.map((item, idx) => {
-              const isUpcoming = (item.daysUntilFefo ?? 999) <= 7;
-              const isFuture = (item.daysRemaining ?? 0) > 60;
+              const isUpcoming = (item.daysUntilFefo ?? 999) <= FEFO_UPCOMING_ALERT_DAYS;
+              const isFuture = (item.daysRemaining ?? 0) > FEFO_ENTRY_DAYS;
               return (
                 <tr
                   key={`${title}-${item.sku}-${idx}`}
@@ -834,7 +840,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           <AlertCircle className="w-6 h-6 text-amber-300 shrink-0 mt-0.5 animate-pulse" />
           <div className="min-w-0">
             <p className="text-sm font-black uppercase tracking-wider text-amber-100">
-              Alerta — {fefoUpcomingAlert.length} produto{fefoUpcomingAlert.length !== 1 ? 's' : ''} entra{fefoUpcomingAlert.length === 1 ? '' : 'm'} no FEFO em até 7 dias
+              Alerta — {fefoUpcomingAlert.length} produto{fefoUpcomingAlert.length !== 1 ? 's' : ''} entra{fefoUpcomingAlert.length === 1 ? '' : 'm'} no FEFO em até {FEFO_UPCOMING_ALERT_DAYS} dias
             </p>
             <p className="text-xs text-amber-200/90 mt-1 truncate">
               Próximo: {fefoUpcomingAlert[0]?.sku} — entrada {fefoUpcomingAlert[0]?.fefoEntryDate}
@@ -871,20 +877,20 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
 
   const perdaProjection = React.useMemo(
     () => [...perdaEligible]
-      .filter(item => (item.daysRemaining ?? 0) > 10)
+      .filter(item => (item.daysRemaining ?? 0) > PERDA_ENTRY_DAYS)
       .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
     [perdaEligible]
   );
 
   const perdaActive = React.useMemo(
     () => [...perdaEligible]
-      .filter(item => (item.daysRemaining ?? 0) <= 10)
+      .filter(item => (item.daysRemaining ?? 0) <= PERDA_ENTRY_DAYS)
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [perdaEligible]
   );
 
   const perdaUpcomingAlert = React.useMemo(
-    () => perdaProjection.filter(item => (item.daysUntilPerda ?? 999) <= 7),
+    () => perdaProjection.filter(item => (item.daysUntilPerda ?? 999) <= PERDA_UPCOMING_ALERT_DAYS),
     [perdaProjection]
   );
 
@@ -914,8 +920,8 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
         <tbody className="divide-y divide-white/10">
           {items.length > 0 ? (
             items.map((item, idx) => {
-              const isUpcoming = (item.daysUntilPerda ?? 999) <= 7;
-              const isProjection = (item.daysRemaining ?? 0) > 10;
+              const isUpcoming = (item.daysUntilPerda ?? 999) <= PERDA_UPCOMING_ALERT_DAYS;
+              const isProjection = (item.daysRemaining ?? 0) > PERDA_ENTRY_DAYS;
               const isUrgent = !isProjection && (item.daysRemaining ?? 999) <= 3;
               return (
                 <tr
@@ -977,7 +983,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           <AlertCircle className="w-6 h-6 text-rose-300 shrink-0 mt-0.5 animate-pulse" />
           <div className="min-w-0">
             <p className="text-sm font-black uppercase tracking-wider text-rose-100">
-              Alerta — {perdaUpcomingAlert.length} produto{perdaUpcomingAlert.length !== 1 ? 's' : ''} entra{perdaUpcomingAlert.length === 1 ? '' : 'm'} em PERDA em até 7 dias
+              Alerta — {perdaUpcomingAlert.length} produto{perdaUpcomingAlert.length !== 1 ? 's' : ''} entra{perdaUpcomingAlert.length === 1 ? '' : 'm'} em PERDA em até {PERDA_ENTRY_DAYS} dias
             </p>
             <p className="text-xs text-rose-200/90 mt-1 truncate">
               Próximo: {perdaUpcomingAlert[0]?.sku} — entrada {perdaUpcomingAlert[0]?.perdaEntryDate}
@@ -1135,7 +1141,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <div>
                       <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
                       <p className="text-xs text-amber-200/80 mt-1">
-                        {fefoProjection.length} na fila de entrada · {fefoActive.length} em FEFO
+                        Regra: {FEFO_ENTRY_DAYS} dias para vencer · {fefoProjection.length} na fila · {fefoActive.length} em FEFO
                       </p>
                     </div>
                   </div>
@@ -1155,7 +1161,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <div>
                       <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
                       <p className="text-xs text-rose-200/80 mt-1">
-                        {perdaProjection.length} na fila de entrada · {perdaActive.length} em PERDA
+                        Regra: {PERDA_ENTRY_DAYS} dias para vencer · {perdaProjection.length} na fila · {perdaActive.length} em PERDA
                       </p>
                     </div>
                   </div>
@@ -1866,17 +1872,17 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           const isRuleApplicable = estado === 'NORMAL' && (area === 'PICKING' || area === 'PULMAO');
 
           if (isRuleApplicable) {
-            fefoEntryDate = formatDateBR(addDays(expDate, -60), true);
-            perdaEntryDate = formatDateBR(addDays(expDate, -10), true);
-            daysUntilFefo = daysRemaining - 60;
-            daysUntilPerda = daysRemaining - 10;
+            fefoEntryDate = formatDateBR(addDays(expDate, -FEFO_ENTRY_DAYS), true);
+            perdaEntryDate = formatDateBR(addDays(expDate, -PERDA_ENTRY_DAYS), true);
+            daysUntilFefo = daysRemaining - FEFO_ENTRY_DAYS;
+            daysUntilPerda = daysRemaining - PERDA_ENTRY_DAYS;
 
-            if (daysRemaining <= 10) {
+            if (daysRemaining <= PERDA_ENTRY_DAYS) {
               category = 'PERDA';
               perdaCount++;
             } else {
               fefoCount++;
-              if (daysRemaining <= 60) {
+              if (daysRemaining <= FEFO_ENTRY_DAYS) {
                 category = 'FEFO';
               }
             }
