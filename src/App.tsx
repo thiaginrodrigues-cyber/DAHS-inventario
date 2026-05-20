@@ -178,6 +178,7 @@ interface OccupancyData {
 
 interface InventarioGTSKU {
   sku: string;
+  position?: string;
   description: string;
   expirationDate: string;
   shelfLifeAL: string | number;
@@ -776,7 +777,8 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
       <table className="w-full text-left border-collapse">
         <thead className="sticky top-0 z-10">
           <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
-            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 w-16 text-center">{positionLabel}</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 w-12 text-center">{positionLabel}</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">Posição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">SKU</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Entrada FEFO</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Vencimento</th>
@@ -801,6 +803,9 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <span className="inline-flex min-w-[2rem] justify-center text-lg font-black font-mono text-amber-300">
                       {getPosition(idx)}
                     </span>
+                  </td>
+                  <td className="px-4 py-4 align-top whitespace-nowrap">
+                    <span className="text-sm font-black font-mono text-amber-100">{item.position || '—'}</span>
                   </td>
                   <td className="px-4 py-4 align-top">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -828,7 +833,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             })
           ) : (
             <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
+              <td colSpan={5} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
                 Nenhum item nesta faixa
               </td>
             </tr>
@@ -848,7 +853,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               Alerta — {fefoUpcomingAlert.length} produto{fefoUpcomingAlert.length !== 1 ? 's' : ''} entra{fefoUpcomingAlert.length === 1 ? '' : 'm'} no FEFO em até {FEFO_UPCOMING_ALERT_DAYS} dias
             </p>
             <p className="text-xs text-amber-200/90 mt-1 truncate">
-              Próximo: {fefoUpcomingAlert[0]?.sku} — entrada {fefoUpcomingAlert[0]?.fefoEntryDate}
+              Próximo: {fefoUpcomingAlert[0]?.sku} · pos. {fefoUpcomingAlert[0]?.position} — entrada {fefoUpcomingAlert[0]?.fefoEntryDate}
               {fefoUpcomingAlert.length > 1 ? ` (+${fefoUpcomingAlert.length - 1})` : ''}
             </p>
           </div>
@@ -859,13 +864,13 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           <FefoTableSection
             title={`Próximos ao FEFO (entrada em até ${FEFO_UPCOMING_ALERT_DAYS} dias)`}
             items={fefoProjection}
-            positionLabel="Pos."
+            positionLabel="Fila"
             getPosition={(idx) => idx + 1}
           />
           <FefoTableSection
             title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
             items={fefoActive}
-            positionLabel="Pos."
+            positionLabel="Fila"
             getPosition={(idx) => idx + 1}
           />
         </div>
@@ -914,7 +919,8 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
       <table className="w-full text-left border-collapse">
         <thead className="sticky top-0 z-10">
           <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
-            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-16 text-center">Pos.</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-12 text-center">Fila</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">Posição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Vencimento</th>
@@ -943,6 +949,9 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                       {getPosition(idx)}
                     </span>
                   </td>
+                  <td className="px-4 py-4 align-top whitespace-nowrap">
+                    <span className="text-sm font-black font-mono text-rose-100">{item.position || '—'}</span>
+                  </td>
                   <td className="px-4 py-4 align-top">
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
@@ -969,7 +978,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             })
           ) : (
             <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
+              <td colSpan={5} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
                 Nenhum item nesta faixa
               </td>
             </tr>
@@ -989,7 +998,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               Alerta — {perdaUpcomingAlert.length} produto{perdaUpcomingAlert.length !== 1 ? 's' : ''} entra{perdaUpcomingAlert.length === 1 ? '' : 'm'} em PERDA em até {PERDA_ENTRY_DAYS} dias
             </p>
             <p className="text-xs text-rose-200/90 mt-1 truncate">
-              Próximo: {perdaUpcomingAlert[0]?.sku} — entrada {perdaUpcomingAlert[0]?.perdaEntryDate}
+              Próximo: {perdaUpcomingAlert[0]?.sku} · pos. {perdaUpcomingAlert[0]?.position} — entrada {perdaUpcomingAlert[0]?.perdaEntryDate}
               {perdaUpcomingAlert.length > 1 ? ` (+${perdaUpcomingAlert.length - 1})` : ''}
             </p>
           </div>
@@ -1849,6 +1858,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
         const sku = String(row[10] || '').trim(); // Col K
         if (!sku) continue;
         
+        const position = String(row[1] || '').trim(); // Col B
         const description = String(row[12] || '').trim(); // Col M
         const area = String(row[2] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col C
         const estado = String(row[4] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col E
@@ -1898,6 +1908,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           uniqueSKUsSet.add(sku);
           items.push({
             sku,
+            position: position || '—',
             description,
             expirationDate,
             shelfLifeAL,
