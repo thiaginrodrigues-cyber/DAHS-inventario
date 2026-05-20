@@ -186,6 +186,7 @@ interface InventarioGTSKU {
   fefoEntryDate: string | null;
   perdaEntryDate: string | null;
   daysUntilFefo: number | null;
+  daysUntilPerda: number | null;
 }
 
 interface InventarioGTData {
@@ -861,69 +862,146 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     </div>
   );
 
-  const PerdaList = () => {
-    const list = data.items
-      .filter(item => item.category === 'PERDA')
-      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999));
+  const perdaEligible = React.useMemo(
+    () => data.items.filter(
+      item => item.perdaEntryDate !== null && item.daysRemaining !== null
+    ),
+    [data.items]
+  );
 
-    return (
-      <div className="w-full mt-4 bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(55vh,480px)]">
-        <div className="overflow-y-auto flex-1 custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 z-10">
-              <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-16 text-center">Pos.</th>
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Vencimento</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {list.length > 0 ? (
-                list.map((item, idx) => {
-                  const isUrgent = (item.daysRemaining ?? 999) <= 3;
-                  return (
-                    <tr
-                      key={`${item.sku}-${idx}`}
-                      className={cn(
-                        "transition-colors group",
-                        isUrgent
-                          ? "bg-rose-500/25 border-l-4 border-rose-400 hover:bg-rose-500/35"
-                          : "bg-slate-900/70 hover:bg-slate-800/80"
-                      )}
-                    >
-                      <td className="px-4 py-4 text-center align-top">
-                        <span className="inline-flex min-w-[2rem] justify-center text-lg font-black font-mono text-rose-300">
-                          {idx + 1}
+  const perdaProjection = React.useMemo(
+    () => [...perdaEligible]
+      .filter(item => (item.daysRemaining ?? 0) > 10)
+      .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
+    [perdaEligible]
+  );
+
+  const perdaActive = React.useMemo(
+    () => [...perdaEligible]
+      .filter(item => (item.daysRemaining ?? 0) <= 10)
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
+    [perdaEligible]
+  );
+
+  const perdaUpcomingAlert = React.useMemo(
+    () => perdaProjection.filter(item => (item.daysUntilPerda ?? 999) <= 7),
+    [perdaProjection]
+  );
+
+  const PerdaTableSection = ({
+    title,
+    items,
+    getPosition,
+  }: {
+    title: string;
+    items: InventarioGTSKU[];
+    getPosition: (index: number) => number;
+  }) => (
+    <div className="flex flex-col min-h-0">
+      <div className="px-5 py-3 border-b border-white/10 bg-rose-950/40">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-100">{title}</h4>
+        <p className="text-[10px] text-rose-200/70 mt-0.5">{items.length} produto{items.length !== 1 ? 's' : ''}</p>
+      </div>
+      <table className="w-full text-left border-collapse">
+        <thead className="sticky top-0 z-10">
+          <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-16 text-center">Pos.</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Vencimento</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/10">
+          {items.length > 0 ? (
+            items.map((item, idx) => {
+              const isUpcoming = (item.daysUntilPerda ?? 999) <= 7;
+              const isProjection = (item.daysRemaining ?? 0) > 10;
+              const isUrgent = !isProjection && (item.daysRemaining ?? 999) <= 3;
+              return (
+                <tr
+                  key={`${title}-${item.sku}-${idx}`}
+                  className={cn(
+                    "transition-colors group",
+                    isUpcoming && isProjection
+                      ? "bg-rose-500/25 border-l-4 border-rose-400 hover:bg-rose-500/35"
+                      : isUrgent
+                        ? "bg-rose-500/25 border-l-4 border-rose-400 hover:bg-rose-500/35"
+                        : "bg-slate-900/70 hover:bg-slate-800/80"
+                  )}
+                >
+                  <td className="px-4 py-4 text-center align-top">
+                    <span className="inline-flex min-w-[2rem] justify-center text-lg font-black font-mono text-rose-300">
+                      {getPosition(idx)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
+                      {isUpcoming && isProjection && (
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/50 text-rose-50 border border-rose-300/60 animate-pulse">
+                          Alerta
                         </span>
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
-                        <div className="text-xs text-rose-200/90 mt-1 line-clamp-2">{item.description}</div>
-                      </td>
-                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-sm font-black font-mono text-rose-200">{item.perdaEntryDate}</span>
-                      </td>
-                      <td className="px-4 py-4 text-right whitespace-nowrap align-top">
-                        <span className="text-sm font-black font-mono text-rose-200">{item.daysRemaining}d</span>
-                        <div className="text-xs text-slate-300 font-bold mt-1">{item.expirationDate}</div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
-                    Sem itens
+                      )}
+                    </div>
+                    <div className="text-xs text-rose-200/90 mt-1 line-clamp-2">{item.description}</div>
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-rose-200">{item.perdaEntryDate}</span>
+                    {isProjection && item.daysUntilPerda !== null && (
+                      <div className="text-xs text-rose-300 font-bold mt-1">em {item.daysUntilPerda}d</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-rose-200">{item.daysRemaining}d</span>
+                    <div className="text-xs text-slate-300 font-bold mt-1">{item.expirationDate}</div>
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-center text-xs text-zinc-500 font-bold uppercase tracking-wider">
+                Nenhum item nesta faixa
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const PerdaProjectionView = () => (
+    <div className="w-full mt-4 flex flex-col gap-4">
+      {perdaUpcomingAlert.length > 0 && (
+        <div className="rounded-2xl border border-rose-400/60 bg-rose-500/20 px-5 py-4 flex items-start gap-3 shadow-lg shadow-rose-900/20">
+          <AlertCircle className="w-6 h-6 text-rose-300 shrink-0 mt-0.5 animate-pulse" />
+          <div className="min-w-0">
+            <p className="text-sm font-black uppercase tracking-wider text-rose-100">
+              Alerta — {perdaUpcomingAlert.length} produto{perdaUpcomingAlert.length !== 1 ? 's' : ''} entra{perdaUpcomingAlert.length === 1 ? '' : 'm'} em PERDA em até 7 dias
+            </p>
+            <p className="text-xs text-rose-200/90 mt-1 truncate">
+              Próximo: {perdaUpcomingAlert[0]?.sku} — entrada {perdaUpcomingAlert[0]?.perdaEntryDate}
+              {perdaUpcomingAlert.length > 1 ? ` (+${perdaUpcomingAlert.length - 1})` : ''}
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col min-h-[min(70vh,640px)]">
+        <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
+          <PerdaTableSection
+            title="Projeção — próximos a entrar em PERDA"
+            items={perdaProjection}
+            getPosition={(idx) => idx + 1}
+          />
+          <PerdaTableSection
+            title="Já em PERDA"
+            items={perdaActive}
+            getPosition={(idx) => idx + 1}
+          />
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -1074,13 +1152,18 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     <div className="w-14 h-14 bg-rose-500/40 rounded-2xl flex items-center justify-center border border-rose-500/70 shrink-0">
                       <AlertCircle className="w-7 h-7 text-rose-400 animate-pulse" />
                     </div>
-                    <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">PERDA</h3>
+                    <div>
+                      <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
+                      <p className="text-xs text-rose-200/80 mt-1">
+                        {perdaProjection.length} na fila de entrada · {perdaActive.length} em PERDA
+                      </p>
+                    </div>
                   </div>
                   <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
                     {(data.perdaCount || 0).toLocaleString()}
                   </div>
                 </div>
-                <PerdaList />
+                <PerdaProjectionView />
               </div>
             </div>
           </motion.div>
@@ -1771,6 +1854,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
         let fefoEntryDate: string | null = null;
         let perdaEntryDate: string | null = null;
         let daysUntilFefo: number | null = null;
+        let daysUntilPerda: number | null = null;
 
         const expDate = parseSheetDate(rawDate);
         if (expDate) {
@@ -1785,6 +1869,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
             fefoEntryDate = formatDateBR(addDays(expDate, -60), true);
             perdaEntryDate = formatDateBR(addDays(expDate, -10), true);
             daysUntilFefo = daysRemaining - 60;
+            daysUntilPerda = daysRemaining - 10;
 
             if (daysRemaining <= 10) {
               category = 'PERDA';
@@ -1811,7 +1896,8 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
             category,
             fefoEntryDate,
             perdaEntryDate,
-            daysUntilFefo
+            daysUntilFefo,
+            daysUntilPerda
           });
         }
       }
