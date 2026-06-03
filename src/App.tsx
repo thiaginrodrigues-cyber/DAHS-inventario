@@ -875,7 +875,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
         <thead className="sticky top-0 z-10">
           <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 w-12 text-center">{positionLabel}</th>
-            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">Posição</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">Posição / Descrição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">SKU</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Valor (R$)</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Entrada FEFO</th>
@@ -902,11 +902,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                       {getPosition(idx)}
                     </span>
                   </td>
-                  <td className="px-4 py-4 align-top whitespace-nowrap">
-                    <span className="text-sm font-black font-mono text-amber-100">{item.position || '—'}</span>
-                  </td>
                   <td className="px-4 py-4 align-top">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-black font-mono text-amber-100 break-words">{item.position || '—'}</span>
+                      <div className="text-xs text-amber-200/90 break-words">{item.description}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-top whitespace-nowrap">
+                    <div className="flex items-center gap-2">
                       <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
                       {isUpcoming && isFuture && (
                         <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/50 text-amber-50 border border-amber-300/60 animate-pulse">
@@ -914,7 +917,6 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-amber-200/90 mt-1 line-clamp-2">{item.description}</div>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap align-top">
                     <span className="text-sm font-black font-mono text-amber-200">{item.valueBRL != null ? totalCurrency(item.valueBRL) : '-'}</span>
@@ -1030,7 +1032,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
         <thead className="sticky top-0 z-10">
           <tr className={cn("border-b border-white/15", theme.primary === 'blue' ? "bg-blue-950/90" : "bg-slate-900")}>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-12 text-center">Fila</th>
-            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">Posição</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">Posição / Descrição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Valor (R$)</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
@@ -1060,11 +1062,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                       {getPosition(idx)}
                     </span>
                   </td>
-                  <td className="px-4 py-4 align-top whitespace-nowrap">
-                    <span className="text-sm font-black font-mono text-rose-100">{item.position || '—'}</span>
-                  </td>
                   <td className="px-4 py-4 align-top">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-black font-mono text-rose-100 break-words">{item.position || '—'}</span>
+                      <div className="text-xs text-rose-200/90 break-words">{item.description}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-top whitespace-nowrap">
+                    <div className="flex items-center gap-2">
                       <div className={cn("text-sm font-bold font-mono leading-none text-white", theme.contentTitle)}>{item.sku}</div>
                       {isUpcoming && isProjection && (
                         <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/50 text-rose-50 border border-rose-300/60 animate-pulse">
@@ -1072,7 +1077,6 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-rose-200/90 mt-1 line-clamp-2">{item.description}</div>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap align-top">
                     <span className="text-sm font-black font-mono text-rose-200">{item.valueBRL != null ? totalCurrency(item.valueBRL) : '-'}</span>
