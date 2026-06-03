@@ -200,6 +200,7 @@ interface InventarioGTData {
 
 /** Dias restantes até o vencimento para entrar em cada faixa */
 const FEFO_ENTRY_DAYS = 60;
+const PRE_FEFO_ENTRY_DAYS = 90;
 const PERDA_ENTRY_DAYS = 10;
 const FEFO_UPCOMING_ALERT_DAYS = 15;
 const PERDA_UPCOMING_ALERT_DAYS = 15;
@@ -732,33 +733,32 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
   const preFefoItems = React.useMemo(
     () => data.items
       .filter(item => {
-        const days = item.daysRemaining ?? 0;
-        return (
-          item.fefoEntryDate !== null &&
-          item.daysUntilFefo !== null &&
-          days > FEFO_ENTRY_DAYS &&
-          item.daysUntilFefo <= FEFO_UPCOMING_ALERT_DAYS
-        );
+        const days = item.daysRemaining;
+        return days !== null && days > FEFO_ENTRY_DAYS && days <= PRE_FEFO_ENTRY_DAYS;
       })
-      .sort((a, b) => (a.daysUntilFefo ?? 999) - (b.daysUntilFefo ?? 999)),
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
   );
 
   const fefoItems = React.useMemo(
     () => data.items
       .filter(item => {
-        const days = item.daysRemaining ?? 0;
-        return (
-          item.fefoEntryDate !== null &&
-          days > PERDA_ENTRY_DAYS &&
-          days <= FEFO_ENTRY_DAYS
-        );
+        const days = item.daysRemaining;
+        return days !== null && days > PERDA_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS;
       })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
   );
 
-  const fefoUpcomingAlert = preFefoItems;
+  const fefoUpcomingAlert = React.useMemo(
+    () => data.items
+      .filter(item => {
+        const days = item.daysRemaining;
+        return days !== null && days > FEFO_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS + FEFO_UPCOMING_ALERT_DAYS;
+      })
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
+    [data.items]
+  );
 
   const totalCurrency = (value?: number | null) => value != null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) : '-';
 
@@ -877,20 +877,51 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
           </div>
         </div>
       )}
-      <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col max-h-[min(65vh,560px)]">
-        <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
-          <FefoTableSection
-            title={`Próximos ao FEFO (entrada em até ${FEFO_UPCOMING_ALERT_DAYS} dias)`}
-            items={preFefoItems}
-            positionLabel="Fila"
-            getPosition={(idx) => idx + 1}
-          />
-          <FefoTableSection
-            title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
-            items={fefoItems}
-            positionLabel="Fila"
-            getPosition={(idx) => idx + 1}
-          />
+      <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pt-5">
+          <div className="rounded-3xl border border-amber-400/20 bg-amber-500/10 p-6">
+            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-amber-100 mb-3">Projeção PRÉ-FEFO</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Itens</p>
+                <p className="text-3xl font-black text-white mt-2">{preFefoItems.length}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Valor</p>
+                <p className="text-3xl font-black text-white mt-2">{totalCurrency(preFefoTotalValue)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-sky-400/20 bg-sky-500/10 p-6">
+            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-sky-100 mb-3">Projeção FEFO</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Itens</p>
+                <p className="text-3xl font-black text-white mt-2">{fefoItems.length}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Valor</p>
+                <p className="text-3xl font-black text-white mt-2">{totalCurrency(fefoTotalValue)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full bg-slate-950/80 rounded-3xl overflow-hidden border border-white/10 shadow-sm flex flex-col max-h-[min(65vh,560px)]">
+          <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
+            <FefoTableSection
+              title={`PRÉ-FEFO (61 a ${PRE_FEFO_ENTRY_DAYS} dias para vencimento)`}
+              items={preFefoItems}
+              positionLabel="Fila"
+              getPosition={(idx) => idx + 1}
+            />
+            <FefoTableSection
+              title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
+              items={fefoItems}
+              positionLabel="Fila"
+              getPosition={(idx) => idx + 1}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -1207,44 +1238,77 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   </div>
                 </div>
               </div>
-              <div className={cn("p-8 lg:p-10 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-amber-500/40 rounded-2xl flex items-center justify-center border border-amber-500/70 shrink-0">
-                      <AlertCircle className="w-7 h-7 text-amber-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
-                      <p className="text-xs text-amber-200/80 mt-1">
-                        {fefoProjection.length} próximo{fefoProjection.length !== 1 ? 's' : ''} · {fefoActive.length} em FEFO
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-5xl sm:text-6xl font-black text-amber-300 tabular-nums">
-                    {(fefoProjection.length + fefoActive.length).toLocaleString()}
-                  </div>
-                </div>
-                <FefoProjectionView />
-              </div>
 
-              <div className={cn("p-8 lg:p-10 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-rose-500/40 rounded-2xl flex items-center justify-center border border-rose-500/70 shrink-0">
-                      <AlertCircle className="w-7 h-7 text-rose-400 animate-pulse" />
+              <div className="grid grid-cols-1 gap-6">
+                <div className={cn("p-8 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-amber-500/40 rounded-2xl flex items-center justify-center border border-amber-500/70 shrink-0">
+                        <AlertCircle className="w-7 h-7 text-amber-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PRÉ-FEFO</h3>
+                        <p className="text-xs text-amber-200/80 mt-1">
+                          {preFefoItems.length} item{preFefoItems.length !== 1 ? 's' : ''} com vencimento em até {PRE_FEFO_ENTRY_DAYS} dias
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
-                      <p className="text-xs text-rose-200/80 mt-1">
-                        {perdaProjection.length} próximo{perdaProjection.length !== 1 ? 's' : ''} · {perdaActive.length} em PERDA
-                      </p>
+                    <div className="text-5xl sm:text-6xl font-black text-amber-300 tabular-nums">
+                      {preFefoItems.length.toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
-                    {(perdaProjection.length + perdaActive.length).toLocaleString()}
-                  </div>
+                  <FefoTableSection
+                    title={`PRÉ-FEFO (${FEFO_ENTRY_DAYS + 1} a ${PRE_FEFO_ENTRY_DAYS} dias para vencer)`}
+                    items={preFefoItems}
+                    positionLabel="Fila"
+                    getPosition={(idx) => idx + 1}
+                  />
                 </div>
-                <PerdaProjectionView />
+
+                <div className={cn("p-8 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-sky-500/40 rounded-2xl flex items-center justify-center border border-sky-500/70 shrink-0">
+                        <AlertCircle className="w-7 h-7 text-sky-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
+                        <p className="text-xs text-sky-200/80 mt-1">
+                          {fefoItems.length} item{fefoItems.length !== 1 ? 's' : ''} com vencimento em até {FEFO_ENTRY_DAYS} dias
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-5xl sm:text-6xl font-black text-sky-300 tabular-nums">
+                      {fefoItems.length.toLocaleString()}
+                    </div>
+                  </div>
+                  <FefoTableSection
+                    title={`Em FEFO (até ${FEFO_ENTRY_DAYS} dias para vencer)`}
+                    items={fefoItems}
+                    positionLabel="Fila"
+                    getPosition={(idx) => idx + 1}
+                  />
+                </div>
+
+                <div className={cn("p-8 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-rose-500/40 rounded-2xl flex items-center justify-center border border-rose-500/70 shrink-0">
+                        <AlertCircle className="w-7 h-7 text-rose-400 animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
+                        <p className="text-xs text-rose-200/80 mt-1">
+                          {perdaProjection.length} item{perdaProjection.length !== 1 ? 's' : ''} com vencimento em até {PERDA_ENTRY_DAYS} dias
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
+                      {(perdaProjection.length + perdaActive.length).toLocaleString()}
+                    </div>
+                  </div>
+                  <PerdaProjectionView />
+                </div>
               </div>
             </div>
           </motion.div>
@@ -1926,8 +1990,9 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
         const area = String(row[2] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col C
         const estado = String(row[4] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col E
         const shelfLifeAL = row[37] !== undefined && row[37] !== null ? row[37] : 'N/A'; // Col AL
-        const rawValue = row[69]; // Ajuste esta coluna se o valor em reais estiver em outra posição
-        const parsedValue = Number(rawValue);
+        const rawValue = row[173] ?? row[69]; // GR column is index 173 (zero-based); fallback to older index if missing
+        const rawValueString = String(rawValue ?? '').replace(/[\.\sR$]/g, '').replace(',', '.');
+        const parsedValue = Number(rawValueString);
         const valueBRL = Number.isFinite(parsedValue) ? parsedValue : null;
         
         // Expiration date (Col BQ - Index 68) - get raw value from sheet
@@ -1948,23 +2013,19 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           const diffTime = expDate.getTime() - now.getTime();
           daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
-          const isRuleApplicable = estado === 'NORMAL' && (area === 'PICKING' || area === 'PULMAO');
+          fefoEntryDate = formatDateBR(addDays(expDate, -FEFO_ENTRY_DAYS), true);
+          perdaEntryDate = formatDateBR(addDays(expDate, -PERDA_ENTRY_DAYS), true);
+          daysUntilFefo = daysRemaining - FEFO_ENTRY_DAYS;
+          daysUntilPerda = daysRemaining - PERDA_ENTRY_DAYS;
 
-          if (isRuleApplicable) {
-            fefoEntryDate = formatDateBR(addDays(expDate, -FEFO_ENTRY_DAYS), true);
-            perdaEntryDate = formatDateBR(addDays(expDate, -PERDA_ENTRY_DAYS), true);
-            daysUntilFefo = daysRemaining - FEFO_ENTRY_DAYS;
-            daysUntilPerda = daysRemaining - PERDA_ENTRY_DAYS;
-
-            if (daysRemaining <= PERDA_ENTRY_DAYS) {
-              category = 'PERDA';
-              perdaCount++;
-            } else if (daysRemaining <= FEFO_ENTRY_DAYS) {
-              category = 'FEFO';
-              fefoCount++;
-            } else if (daysUntilFefo !== null && daysUntilFefo <= FEFO_UPCOMING_ALERT_DAYS) {
-              category = 'PRE-FEFO';
-            }
+          if (daysRemaining <= PERDA_ENTRY_DAYS) {
+            category = 'PERDA';
+            perdaCount++;
+          } else if (daysRemaining <= FEFO_ENTRY_DAYS) {
+            category = 'FEFO';
+            fefoCount++;
+          } else if (daysRemaining <= PRE_FEFO_ENTRY_DAYS) {
+            category = 'PRE-FEFO';
           }
         } else if (rawDate !== undefined && rawDate !== null) {
           expirationDate = String(rawDate).trim();
@@ -3083,7 +3144,18 @@ function DashboardApp() {
                   </div>
                 </motion.div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={syncGoogleSheets}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all",
+                      uploading ? "bg-slate-600 text-white/50 cursor-not-allowed" : "bg-emerald-500 text-white hover:bg-emerald-400"
+                    )}
+                    disabled={uploading}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Atualizar dashboard
+                  </button>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sans">
                       Acesso Direto

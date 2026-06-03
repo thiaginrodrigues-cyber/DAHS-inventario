@@ -8,3 +8,6 @@ coverage/
 !.env.example
 sync-output.json
 firebase-service-account.json
+
+.vercel
+.env*.local
