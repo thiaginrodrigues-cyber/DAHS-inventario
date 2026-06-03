@@ -182,8 +182,9 @@ interface InventarioGTSKU {
   description: string;
   expirationDate: string;
   shelfLifeAL: string | number;
+  valueBRL?: number | null;
   daysRemaining: number | null;
-  category: 'FEFO' | 'PERDA' | 'NORMAL';
+  category: 'PRE-FEFO' | 'FEFO' | 'PERDA' | 'NORMAL';
   fefoEntryDate: string | null;
   perdaEntryDate: string | null;
   daysUntilFefo: number | null;
@@ -200,8 +201,8 @@ interface InventarioGTData {
 /** Dias restantes até o vencimento para entrar em cada faixa */
 const FEFO_ENTRY_DAYS = 60;
 const PERDA_ENTRY_DAYS = 10;
-const FEFO_UPCOMING_ALERT_DAYS = 7;
-const PERDA_UPCOMING_ALERT_DAYS = 10;
+const FEFO_UPCOMING_ALERT_DAYS = 15;
+const PERDA_UPCOMING_ALERT_DAYS = 15;
 
 const addDays = (date: Date, delta: number): Date => {
   const result = new Date(date);
@@ -708,7 +709,7 @@ const AlertCard = ({ sub, theme }: { sub: OccupancyMetric, theme?: any }) => {
   );
 };
 
-const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefined, theme: any }) => {
+const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: InventarioGTData | undefined, theme: any, onRefresh: () => void, lastSync: Date | null }) => {
   const [activeTab, setActiveTab] = useState<'geral' | 'fefo'>('geral');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -724,10 +725,11 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
 
   const filteredItems = data.items.filter(item => 
     item.sku.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.position?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const fefoProjection = React.useMemo(
+  const preFefoItems = React.useMemo(
     () => data.items
       .filter(item => {
         const days = item.daysRemaining ?? 0;
@@ -742,7 +744,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     [data.items]
   );
 
-  const fefoActive = React.useMemo(
+  const fefoItems = React.useMemo(
     () => data.items
       .filter(item => {
         const days = item.daysRemaining ?? 0;
@@ -756,7 +758,19 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
     [data.items]
   );
 
-  const fefoUpcomingAlert = fefoProjection;
+  const fefoUpcomingAlert = preFefoItems;
+
+  const totalCurrency = (value?: number | null) => value != null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) : '-';
+
+  const preFefoTotalValue = React.useMemo(
+    () => preFefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [preFefoItems]
+  );
+
+  const fefoTotalValue = React.useMemo(
+    () => fefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [fefoItems]
+  );
 
   const FefoTableSection = ({
     title,
@@ -780,6 +794,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 w-12 text-center">{positionLabel}</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">Posição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200">SKU</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Valor (R$)</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Entrada FEFO</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 text-right">Vencimento</th>
           </tr>
@@ -817,6 +832,9 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                       )}
                     </div>
                     <div className="text-xs text-amber-200/90 mt-1 line-clamp-2">{item.description}</div>
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-amber-200">{item.valueBRL != null ? totalCurrency(item.valueBRL) : '-'}</span>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap align-top">
                     <span className="text-sm font-black font-mono text-amber-200">{item.fefoEntryDate}</span>
@@ -863,13 +881,13 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
         <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
           <FefoTableSection
             title={`Próximos ao FEFO (entrada em até ${FEFO_UPCOMING_ALERT_DAYS} dias)`}
-            items={fefoProjection}
+            items={preFefoItems}
             positionLabel="Fila"
             getPosition={(idx) => idx + 1}
           />
           <FefoTableSection
             title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
-            items={fefoActive}
+            items={fefoItems}
             positionLabel="Fila"
             getPosition={(idx) => idx + 1}
           />
@@ -922,6 +940,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 w-12 text-center">Fila</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">Posição</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200">SKU</th>
+            <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Valor (R$)</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Entrada PERDA</th>
             <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-rose-200 text-right">Vencimento</th>
           </tr>
@@ -962,6 +981,9 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                       )}
                     </div>
                     <div className="text-xs text-rose-200/90 mt-1 line-clamp-2">{item.description}</div>
+                  </td>
+                  <td className="px-4 py-4 text-right whitespace-nowrap align-top">
+                    <span className="text-sm font-black font-mono text-rose-200">{item.valueBRL != null ? totalCurrency(item.valueBRL) : '-'}</span>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap align-top">
                     <span className="text-sm font-black font-mono text-rose-200">{item.perdaEntryDate}</span>
@@ -1071,26 +1093,39 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
               </div>
               
               <div className={cn("p-8 rounded-3xl border shadow-xl flex flex-col items-center text-center transition-all lg:col-span-2 bg-opacity-80", theme.contentBg, theme.contentBorder)}>
-                 <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6">
+                 <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
                    <div className="text-left">
                       <h2 className={cn("text-2xl font-black uppercase tracking-wider mb-1 text-white", theme.contentTitle)}>Análise de Itens</h2>
-                      <p className={cn("text-xs font-medium text-white/80", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-200")}>Filtro por SKU ou Descrição para listagem detalhada.</p>
+                      <p className={cn("text-xs font-medium text-white/80", theme.primary === 'blue' ? "text-blue-100" : "text-zinc-200")}>Pesquisar por LOCAL ou SKU para acessar o item rapidamente.</p>
+                      <p className="text-[10px] text-white/50 mt-1">Exemplo: LOCAL 011010103  SKU 2006313</p>
                    </div>
-                   <div className="relative w-full max-w-sm">
-                      <input 
-                        type="text" 
-                        placeholder="Pesquisar SKU ou Descrição..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className={cn(
-                          "w-full border rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 transition-all",
-                          theme.primary === 'blue' 
-                            ? "bg-white/20 border-white/40 text-white placeholder:text-white/60 ring-white/50" 
-                            : "bg-black/40 border border-white/20 text-white ring-blue-500/50"
-                        )}
-                      />
+                   <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
+                     <input 
+                       type="text" 
+                       placeholder="Pesquisar LOCAL ou SKU..."
+                       value={searchTerm}
+                       onChange={(e) => setSearchTerm(e.target.value)}
+                       className={cn(
+                         "w-full border rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 transition-all",
+                         theme.primary === 'blue' 
+                           ? "bg-white/20 border-white/40 text-white placeholder:text-white/60 ring-white/50" 
+                           : "bg-black/40 border border-white/20 text-white ring-blue-500/50"
+                       )}
+                     />
+                     <button
+                       onClick={onRefresh}
+                       className={cn(
+                         "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] transition-all bg-emerald-500 text-white hover:bg-emerald-400"
+                       )}
+                     >
+                       <RefreshCw className="w-4 h-4 mr-2" />
+                       Atualizar
+                     </button>
                    </div>
                  </div>
+                 {lastSync && (
+                   <p className="text-[10px] text-white/50 mt-3">Última atualização: {lastSync.toLocaleString()}</p>
+                 )}
               </div>
             </div>
 
@@ -1100,6 +1135,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-20">
                     <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-900/80 border-white/30" : "bg-slate-900/80 border-white/20")}>
+                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>LOCAL</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>SKU</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Descrição do Produto</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Prazo de Validade</th>
@@ -1108,6 +1144,7 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                   <tbody className="divide-y divide-white/15">
                     {filteredItems.slice(0, 500).map((item, idx) => (
                       <tr key={`${item.sku}-${idx}`} className="hover:bg-white/10 transition-colors group">
+                        <td className={cn("px-6 py-4 text-xs font-bold font-mono text-white")}>{item.position || '—'}</td>
                         <td className={cn("px-6 py-4 text-xs font-bold font-mono text-white")}>{item.sku}</td>
                         <td className={cn("px-6 py-4 text-xs font-medium group-hover:text-white transition-colors text-white/90")}>{item.description}</td>
                         <td className={cn("px-6 py-4 text-xs font-bold text-orange-300")}>
@@ -1117,14 +1154,14 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
                     ))}
                     {filteredItems.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="px-6 py-12 text-center text-white/50 italic text-sm">
+                        <td colSpan={4} className="px-6 py-12 text-center text-white/50 italic text-sm">
                           Nenhum item encontrado para a pesquisa.
                         </td>
                       </tr>
                     )}
                     {filteredItems.length > 500 && (
                       <tr>
-                        <td colSpan={3} className="px-6 py-4 text-center text-white/60 text-[10px] font-bold uppercase tracking-widest bg-slate-950/70">
+                        <td colSpan={4} className="px-6 py-4 text-center text-white/60 text-[10px] font-bold uppercase tracking-widest bg-slate-950/70">
                           Mostrando os primeiros 500 itens de {filteredItems.length}. Use a pesquisa para filtrar.
                         </td>
                       </tr>
@@ -1144,6 +1181,32 @@ const InventarioGeralView = ({ data, theme }: { data: InventarioGTData | undefin
           >
             {/* FEFO Metrics */}
             <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-3xl border border-amber-400/20 bg-amber-500/10 p-6 flex flex-col gap-3">
+                  <div className="h-3 w-3 rounded-full bg-amber-400" />
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-amber-200 font-black">PRÉ-FEFO</p>
+                    <p className="text-3xl font-black text-white">{preFefoItems.length}</p>
+                    <p className="text-xs text-white/50">Valor {totalCurrency(preFefoTotalValue)}</p>
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-sky-400/20 bg-sky-500/10 p-6 flex flex-col gap-3">
+                  <div className="h-3 w-3 rounded-full bg-sky-400" />
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-black">FEFO</p>
+                    <p className="text-3xl font-black text-white">{fefoItems.length}</p>
+                    <p className="text-xs text-white/50">Valor {totalCurrency(fefoTotalValue)}</p>
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-rose-400/20 bg-rose-500/10 p-6 flex flex-col gap-3">
+                  <div className="h-3 w-3 rounded-full bg-rose-400" />
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-rose-200 font-black">PERDA</p>
+                    <p className="text-3xl font-black text-white">{(perdaProjection.length + perdaActive.length).toLocaleString()}</p>
+                    <p className="text-xs text-white/50">Valor {totalCurrency(perdaProjection.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0) + perdaActive.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0))}</p>
+                  </div>
+                </div>
+              </div>
               <div className={cn("p-8 lg:p-10 rounded-3xl border shadow-2xl flex flex-col w-full transition-all bg-opacity-90", theme.contentBg, theme.contentBorder)}>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 w-full">
                   <div className="flex items-center gap-4">
@@ -1863,13 +1926,16 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
         const area = String(row[2] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col C
         const estado = String(row[4] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col E
         const shelfLifeAL = row[37] !== undefined && row[37] !== null ? row[37] : 'N/A'; // Col AL
+        const rawValue = row[69]; // Ajuste esta coluna se o valor em reais estiver em outra posição
+        const parsedValue = Number(rawValue);
+        const valueBRL = Number.isFinite(parsedValue) ? parsedValue : null;
         
         // Expiration date (Col BQ - Index 68) - get raw value from sheet
         let expirationDate = 'N/A';
         const rawDate = row[68];
         
         let daysRemaining: number | null = null;
-        let category: 'FEFO' | 'PERDA' | 'NORMAL' = 'NORMAL';
+        let category: 'PRE-FEFO' | 'FEFO' | 'PERDA' | 'NORMAL' = 'NORMAL';
         let fefoEntryDate: string | null = null;
         let perdaEntryDate: string | null = null;
         let daysUntilFefo: number | null = null;
@@ -1893,11 +1959,11 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
             if (daysRemaining <= PERDA_ENTRY_DAYS) {
               category = 'PERDA';
               perdaCount++;
-            } else {
+            } else if (daysRemaining <= FEFO_ENTRY_DAYS) {
+              category = 'FEFO';
               fefoCount++;
-              if (daysRemaining <= FEFO_ENTRY_DAYS) {
-                category = 'FEFO';
-              }
+            } else if (daysUntilFefo !== null && daysUntilFefo <= FEFO_UPCOMING_ALERT_DAYS) {
+              category = 'PRE-FEFO';
             }
           }
         } else if (rawDate !== undefined && rawDate !== null) {
@@ -1912,6 +1978,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
             description,
             expirationDate,
             shelfLifeAL,
+            valueBRL,
             daysRemaining,
             category,
             fefoEntryDate,
@@ -2065,12 +2132,10 @@ function DashboardApp() {
     return () => unsubscribe();
   }, []);
 
-  // Periodic Sync (every 30 seconds if admin is logged in)
+  // Initial sync on mount for admin users. Manual refresh is available in the Inventário Geral Girotrade view.
   useEffect(() => {
     if (isAdmin) {
       syncGoogleSheets();
-      const interval = setInterval(syncGoogleSheets, 30000);
-      return () => clearInterval(interval);
     }
   }, [isAdmin, syncGoogleSheets]);
 
@@ -3028,7 +3093,7 @@ function DashboardApp() {
               </div>
 
               {activeModule === 'INVENTARIO GERAL GIROTRADE' ? (
-                <InventarioGeralView data={data?.inventarioGT} theme={theme} />
+                <InventarioGeralView data={data?.inventarioGT} theme={theme} onRefresh={syncGoogleSheets} lastSync={lastSync} />
               ) : (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
