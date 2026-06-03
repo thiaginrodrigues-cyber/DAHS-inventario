@@ -12,7 +12,7 @@ import {
 import { 
   Upload, 
   LayoutDashboard, 
-  Map, 
+  Map as MapIcon, 
   AlertCircle, 
   CheckCircle2, 
   Clock, 
@@ -112,6 +112,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             >
               Recarregar Página
             </button>
+            <div className="mt-6 p-3 bg-white/10 rounded-md text-left text-xs overflow-auto max-h-40 border border-white/10">
+              <div className="text-rose-100 font-bold mb-2">Detalhes do erro (para debug):</div>
+              <div className="text-rose-100/90 break-words">
+                <pre className="whitespace-pre-wrap text-[12px]">{this.state.error?.message}\n{this.state.error && (this.state.error.stack ?? '')}</pre>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -216,6 +222,15 @@ const formatDateBR = (date: Date, fullYear = false): string => {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = fullYear ? String(date.getFullYear()) : String(date.getFullYear()).slice(-2);
   return `${d}/${m}/${y}`;
+};
+
+const totalCurrency = (amount: number | null | undefined): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount ?? 0);
 };
 
 interface DashboardMetrics {
@@ -760,7 +775,50 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     [data.items]
   );
 
-  const totalCurrency = (value?: number | null) => value != null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) : '-';
+  const aggregateBySKU = (items: InventarioGTSKU[]) => {
+    const grouped = new Map<string, InventarioGTSKU>();
+
+    items.forEach(item => {
+      const key = item.sku;
+      const existing = grouped.get(key);
+      const position = item.position || '—';
+      const value = item.valueBRL ?? 0;
+
+      if (!existing) {
+        grouped.set(key, {
+          ...item,
+          position,
+          valueBRL: value
+        });
+        return;
+      }
+
+      const mergedPositions = new Set<string>([
+        ...String(existing.position || '—').split(',').map(p => p.trim()).filter(Boolean),
+        ...String(position).split(',').map(p => p.trim()).filter(Boolean)
+      ]);
+
+      existing.position = Array.from(mergedPositions).join(', ');
+      existing.valueBRL = (existing.valueBRL ?? 0) + value;
+      existing.daysRemaining = [existing.daysRemaining, item.daysRemaining]
+        .filter((v): v is number => v != null)
+        .sort((a, b) => a - b)[0] ?? null;
+      existing.daysUntilFefo = [existing.daysUntilFefo, item.daysUntilFefo]
+        .filter((v): v is number => v != null)
+        .sort((a, b) => a - b)[0] ?? null;
+      existing.daysUntilPerda = [existing.daysUntilPerda, item.daysUntilPerda]
+        .filter((v): v is number => v != null)
+        .sort((a, b) => a - b)[0] ?? null;
+      existing.expirationDate = existing.expirationDate || item.expirationDate;
+      existing.fefoEntryDate = existing.fefoEntryDate || item.fefoEntryDate;
+      existing.perdaEntryDate = existing.perdaEntryDate || item.perdaEntryDate;
+    });
+
+    return Array.from(grouped.values());
+  };
+
+  const preFefoGrouped = React.useMemo(() => aggregateBySKU(preFefoItems), [preFefoItems]);
+  const fefoGrouped = React.useMemo(() => aggregateBySKU(fefoItems), [fefoItems]);
 
   const preFefoTotalValue = React.useMemo(
     () => preFefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
@@ -771,6 +829,31 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     () => fefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
     [fefoItems]
   );
+
+  const perdaProjection = React.useMemo(
+    () => data.items
+      .filter(item => {
+        const days = item.daysRemaining ?? 0;
+        return (
+          item.perdaEntryDate !== null &&
+          item.daysUntilPerda !== null &&
+          days > PERDA_ENTRY_DAYS &&
+          item.daysUntilPerda <= PERDA_UPCOMING_ALERT_DAYS
+        );
+      })
+      .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
+    [data.items]
+  );
+
+  const perdaActive = React.useMemo(
+    () => data.items
+      .filter(item => item.perdaEntryDate !== null && (item.daysRemaining ?? 999) <= PERDA_ENTRY_DAYS)
+      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
+    [data.items]
+  );
+
+  const perdaProjectionGrouped = React.useMemo(() => aggregateBySKU(perdaProjection), [perdaProjection]);
+  const perdaActiveGrouped = React.useMemo(() => aggregateBySKU(perdaActive), [perdaActive]);
 
   const FefoTableSection = ({
     title,
@@ -884,7 +967,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Itens</p>
-                <p className="text-3xl font-black text-white mt-2">{preFefoItems.length}</p>
+                <p className="text-3xl font-black text-white mt-2">{preFefoGrouped.length}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Valor</p>
@@ -897,7 +980,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Itens</p>
-                <p className="text-3xl font-black text-white mt-2">{fefoItems.length}</p>
+                <p className="text-3xl font-black text-white mt-2">{fefoGrouped.length}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Valor</p>
@@ -911,42 +994,20 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
           <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
             <FefoTableSection
               title={`PRÉ-FEFO (61 a ${PRE_FEFO_ENTRY_DAYS} dias para vencimento)`}
-              items={preFefoItems}
-              positionLabel="Fila"
+              items={preFefoGrouped}
+              positionLabel="Posições"
               getPosition={(idx) => idx + 1}
             />
             <FefoTableSection
               title={`Em FEFO (${PERDA_ENTRY_DAYS + 1} a ${FEFO_ENTRY_DAYS} dias para vencer)`}
-              items={fefoItems}
-              positionLabel="Fila"
+              items={fefoGrouped}
+              positionLabel="Posições"
               getPosition={(idx) => idx + 1}
             />
           </div>
         </div>
       </div>
     </div>
-  );
-
-  const perdaProjection = React.useMemo(
-    () => data.items
-      .filter(item => {
-        const days = item.daysRemaining ?? 0;
-        return (
-          item.perdaEntryDate !== null &&
-          item.daysUntilPerda !== null &&
-          days > PERDA_ENTRY_DAYS &&
-          item.daysUntilPerda <= PERDA_UPCOMING_ALERT_DAYS
-        );
-      })
-      .sort((a, b) => (a.daysUntilPerda ?? 999) - (b.daysUntilPerda ?? 999)),
-    [data.items]
-  );
-
-  const perdaActive = React.useMemo(
-    () => data.items
-      .filter(item => item.perdaEntryDate !== null && (item.daysRemaining ?? 999) <= PERDA_ENTRY_DAYS)
-      .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
-    [data.items]
   );
 
   const perdaUpcomingAlert = perdaProjection;
@@ -1061,12 +1122,12 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
         <div className="overflow-y-auto flex-1 custom-scrollbar divide-y divide-white/10">
           <PerdaTableSection
             title={`Próximos à PERDA (entrada em até ${PERDA_UPCOMING_ALERT_DAYS} dias)`}
-            items={perdaProjection}
+            items={perdaProjectionGrouped}
             getPosition={(idx) => idx + 1}
           />
           <PerdaTableSection
             title={`Em PERDA (até ${PERDA_ENTRY_DAYS} dias para vencer)`}
-            items={perdaActive}
+            items={perdaActiveGrouped}
             getPosition={(idx) => idx + 1}
           />
         </div>
@@ -1217,7 +1278,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <div className="h-3 w-3 rounded-full bg-amber-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-amber-200 font-black">PRÉ-FEFO</p>
-                    <p className="text-3xl font-black text-white">{preFefoItems.length}</p>
+                    <p className="text-3xl font-black text-white">{preFefoGrouped.length}</p>
                     <p className="text-xs text-white/50">Valor {totalCurrency(preFefoTotalValue)}</p>
                   </div>
                 </div>
@@ -1225,7 +1286,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <div className="h-3 w-3 rounded-full bg-sky-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-black">FEFO</p>
-                    <p className="text-3xl font-black text-white">{fefoItems.length}</p>
+                    <p className="text-3xl font-black text-white">{fefoGrouped.length}</p>
                     <p className="text-xs text-white/50">Valor {totalCurrency(fefoTotalValue)}</p>
                   </div>
                 </div>
@@ -1233,7 +1294,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <div className="h-3 w-3 rounded-full bg-rose-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-rose-200 font-black">PERDA</p>
-                    <p className="text-3xl font-black text-white">{(perdaProjection.length + perdaActive.length).toLocaleString()}</p>
+                    <p className="text-3xl font-black text-white">{(perdaProjectionGrouped.length + perdaActiveGrouped.length).toLocaleString()}</p>
                     <p className="text-xs text-white/50">Valor {totalCurrency(perdaProjection.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0) + perdaActive.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0))}</p>
                   </div>
                 </div>
@@ -1249,18 +1310,18 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                       <div>
                         <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PRÉ-FEFO</h3>
                         <p className="text-xs text-amber-200/80 mt-1">
-                          {preFefoItems.length} item{preFefoItems.length !== 1 ? 's' : ''} com vencimento em até {PRE_FEFO_ENTRY_DAYS} dias
+                          {preFefoGrouped.length} item{preFefoGrouped.length !== 1 ? 's' : ''} com vencimento em até {PRE_FEFO_ENTRY_DAYS} dias
                         </p>
                       </div>
                     </div>
                     <div className="text-5xl sm:text-6xl font-black text-amber-300 tabular-nums">
-                      {preFefoItems.length.toLocaleString()}
+                      {preFefoGrouped.length.toLocaleString()}
                     </div>
                   </div>
                   <FefoTableSection
                     title={`PRÉ-FEFO (${FEFO_ENTRY_DAYS + 1} a ${PRE_FEFO_ENTRY_DAYS} dias para vencer)`}
-                    items={preFefoItems}
-                    positionLabel="Fila"
+                    items={preFefoGrouped}
+                    positionLabel="Posições"
                     getPosition={(idx) => idx + 1}
                   />
                 </div>
@@ -1274,18 +1335,18 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                       <div>
                         <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção FEFO</h3>
                         <p className="text-xs text-sky-200/80 mt-1">
-                          {fefoItems.length} item{fefoItems.length !== 1 ? 's' : ''} com vencimento em até {FEFO_ENTRY_DAYS} dias
+                          {fefoGrouped.length} item{fefoGrouped.length !== 1 ? 's' : ''} com vencimento em até {FEFO_ENTRY_DAYS} dias
                         </p>
                       </div>
                     </div>
                     <div className="text-5xl sm:text-6xl font-black text-sky-300 tabular-nums">
-                      {fefoItems.length.toLocaleString()}
+                      {fefoGrouped.length.toLocaleString()}
                     </div>
                   </div>
                   <FefoTableSection
                     title={`Em FEFO (até ${FEFO_ENTRY_DAYS} dias para vencer)`}
-                    items={fefoItems}
-                    positionLabel="Fila"
+                    items={fefoGrouped}
+                    positionLabel="Posições"
                     getPosition={(idx) => idx + 1}
                   />
                 </div>
@@ -1299,12 +1360,12 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                       <div>
                         <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white">Projeção PERDA</h3>
                         <p className="text-xs text-rose-200/80 mt-1">
-                          {perdaProjection.length} item{perdaProjection.length !== 1 ? 's' : ''} com vencimento em até {PERDA_ENTRY_DAYS} dias
+                          {perdaProjectionGrouped.length} item{perdaProjectionGrouped.length !== 1 ? 's' : ''} com vencimento em até {PERDA_ENTRY_DAYS} dias
                         </p>
                       </div>
                     </div>
                     <div className="text-5xl sm:text-6xl font-black text-rose-300 tabular-nums">
-                      {(perdaProjection.length + perdaActive.length).toLocaleString()}
+                      {(perdaProjectionGrouped.length + perdaActiveGrouped.length).toLocaleString()}
                     </div>
                   </div>
                   <PerdaProjectionView />
@@ -1972,7 +2033,6 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
       const gtData: any[][] = XLSX.utils.sheet_to_json(gtSheet, { header: 1 });
       
       const items: InventarioGTSKU[] = [];
-      const uniqueSKUsSet = new Set<string>();
       let fefoCount = 0;
       let perdaCount = 0;
       const now = new Date();
@@ -1988,9 +2048,11 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
         const position = String(row[1] || '').trim(); // Col B
         const description = String(row[12] || '').trim(); // Col M
         const area = String(row[2] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col C
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
         const estado = String(row[4] || '').trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Col E
         const shelfLifeAL = row[37] !== undefined && row[37] !== null ? row[37] : 'N/A'; // Col AL
-        const rawValue = row[173] ?? row[69]; // GR column is index 173 (zero-based); fallback to older index if missing
+        // GR column (col letters 'GR') is zero-based index 69. Keep older fallbacks for compatibility.
+        const rawValue = row[69] ?? row[173] ?? row[199];
         const rawValueString = String(rawValue ?? '').replace(/[\.\sR$]/g, '').replace(',', '.');
         const parsedValue = Number(rawValueString);
         const valueBRL = Number.isFinite(parsedValue) ? parsedValue : null;
@@ -2031,28 +2093,27 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           expirationDate = String(rawDate).trim();
         }
 
-        if (!uniqueSKUsSet.has(sku)) {
-          uniqueSKUsSet.add(sku);
-          items.push({
-            sku,
-            position: position || '—',
-            description,
-            expirationDate,
-            shelfLifeAL,
-            valueBRL,
-            daysRemaining,
-            category,
-            fefoEntryDate,
-            perdaEntryDate,
-            daysUntilFefo,
-            daysUntilPerda
-          });
-        }
+        if (!isSellableArea) continue;
+
+        items.push({
+          sku,
+          position: position || '—',
+          description,
+          expirationDate,
+          shelfLifeAL,
+          valueBRL,
+          daysRemaining,
+          category,
+          fefoEntryDate,
+          perdaEntryDate,
+          daysUntilFefo,
+          daysUntilPerda
+        });
       }
       
       metrics.inventarioGT = {
         items,
-        uniqueSKUCount: uniqueSKUsSet.size,
+        uniqueSKUCount: new Set(items.map(item => item.sku)).size,
         fefoCount,
         perdaCount
       };
@@ -2458,7 +2519,7 @@ function DashboardApp() {
                   activeTab === 'streets' ? `${theme.active} text-black shadow-lg ${theme.shadow}` : "text-black/60 hover:text-black hover:bg-slate-50"
                 )}
               >
-                <Map className="w-4 h-4" />
+                <MapIcon className="w-4 h-4" />
                 Detalhes por Rua
               </button>
               <button 
