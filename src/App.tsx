@@ -830,16 +830,6 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     [fefoGrouped]
   );
 
-  const perdaProjectionTotalValue = React.useMemo(
-    () => perdaProjectionGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
-    [perdaProjectionGrouped]
-  );
-
-  const perdaActiveTotalValue = React.useMemo(
-    () => perdaActiveGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
-    [perdaActiveGrouped]
-  );
-
   const perdaProjection = React.useMemo(
     () => data.items
       .filter(item => {
@@ -864,6 +854,16 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
 
   const perdaProjectionGrouped = React.useMemo(() => aggregateBySKU(perdaProjection), [perdaProjection]);
   const perdaActiveGrouped = React.useMemo(() => aggregateBySKU(perdaActive), [perdaActive]);
+
+  const perdaProjectionTotalValue = React.useMemo(
+    () => perdaProjectionGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [perdaProjectionGrouped]
+  );
+
+  const perdaActiveTotalValue = React.useMemo(
+    () => perdaActiveGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [perdaActiveGrouped]
+  );
 
   const FefoTableSection = ({
     title,
@@ -1309,7 +1309,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-rose-200 font-black">PERDA</p>
                     <p className="text-3xl font-black text-white">{(perdaProjectionGrouped.length + perdaActiveGrouped.length).toLocaleString()}</p>
-                    <p className="text-xs text-white/50">Valor {totalCurrency(perdaProjection.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0) + perdaActive.reduce((sum,item)=> sum + (item.valueBRL ?? 0), 0))}</p>
+                    <p className="text-xs text-white/50">Valor {totalCurrency(perdaProjectionTotalValue + perdaActiveTotalValue)}</p>
                   </div>
                 </div>
               </div>
