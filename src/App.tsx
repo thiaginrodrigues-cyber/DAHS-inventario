@@ -2107,8 +2107,6 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           expirationDate = String(rawDate).trim();
         }
 
-        if (!isSellableArea) continue;
-
         items.push({
           sku,
           position: position || '—',
