@@ -821,13 +821,23 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
   const fefoGrouped = React.useMemo(() => aggregateBySKU(fefoItems), [fefoItems]);
 
   const preFefoTotalValue = React.useMemo(
-    () => preFefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
-    [preFefoItems]
+    () => preFefoGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [preFefoGrouped]
   );
 
   const fefoTotalValue = React.useMemo(
-    () => fefoItems.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
-    [fefoItems]
+    () => fefoGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [fefoGrouped]
+  );
+
+  const perdaProjectionTotalValue = React.useMemo(
+    () => perdaProjectionGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [perdaProjectionGrouped]
+  );
+
+  const perdaActiveTotalValue = React.useMemo(
+    () => perdaActiveGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
+    [perdaActiveGrouped]
   );
 
   const perdaProjection = React.useMemo(
@@ -2044,7 +2054,7 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
       
       for (let i = 1; i < gtData.length; i++) {
         const row = gtData[i];
-        if (!row || row.length < 11) continue;
+        if (!row) continue;
         
         const sku = String(row[10] || '').trim(); // Col K
         if (!sku) continue;
