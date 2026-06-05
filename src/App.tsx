@@ -195,6 +195,7 @@ interface InventarioGTSKU {
   perdaEntryDate: string | null;
   daysUntilFefo: number | null;
   daysUntilPerda: number | null;
+  area?: string;
 }
 
 interface InventarioGTData {
@@ -749,7 +750,9 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     () => data.items
       .filter(item => {
         const days = item.daysRemaining;
-        return days !== null && days > FEFO_ENTRY_DAYS && days <= PRE_FEFO_ENTRY_DAYS;
+        const area = (item.area || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
+        return isSellableArea && days !== null && days > FEFO_ENTRY_DAYS && days <= PRE_FEFO_ENTRY_DAYS;
       })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
@@ -759,7 +762,9 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     () => data.items
       .filter(item => {
         const days = item.daysRemaining;
-        return days !== null && days > PERDA_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS;
+        const area = (item.area || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
+        return isSellableArea && days !== null && days > PERDA_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS;
       })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
@@ -769,7 +774,9 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     () => data.items
       .filter(item => {
         const days = item.daysRemaining;
-        return days !== null && days > FEFO_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS + FEFO_UPCOMING_ALERT_DAYS;
+        const area = (item.area || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
+        return isSellableArea && days !== null && days > FEFO_ENTRY_DAYS && days <= FEFO_ENTRY_DAYS + FEFO_UPCOMING_ALERT_DAYS;
       })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
@@ -834,7 +841,10 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
     () => data.items
       .filter(item => {
         const days = item.daysRemaining ?? 0;
+        const area = (item.area || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
         return (
+          isSellableArea &&
           item.perdaEntryDate !== null &&
           item.daysUntilPerda !== null &&
           days > PERDA_ENTRY_DAYS &&
@@ -847,7 +857,11 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
 
   const perdaActive = React.useMemo(
     () => data.items
-      .filter(item => item.perdaEntryDate !== null && (item.daysRemaining ?? 999) <= PERDA_ENTRY_DAYS)
+      .filter(item => {
+        const area = (item.area || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isSellableArea = area.includes('PICKING') || area.includes('PULMAO PALETIZADO');
+        return isSellableArea && item.perdaEntryDate !== null && (item.daysRemaining ?? 999) <= PERDA_ENTRY_DAYS;
+      })
       .sort((a, b) => (a.daysRemaining ?? 999) - (b.daysRemaining ?? 999)),
     [data.items]
   );
@@ -1241,7 +1255,6 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-20">
                     <tr className={cn("border-b transition-all duration-500", theme.primary === 'blue' ? "bg-blue-900/80 border-white/30" : "bg-slate-900/80 border-white/20")}>
-                      <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>LOCAL</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>SKU</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Descrição do Produto</th>
                       <th className={cn("px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white")}>Prazo de Validade</th>
@@ -1250,7 +1263,6 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <tbody className="divide-y divide-white/15">
                     {filteredItems.slice(0, 500).map((item, idx) => (
                       <tr key={`${item.sku}-${idx}`} className="hover:bg-white/10 transition-colors group">
-                        <td className={cn("px-6 py-4 text-xs font-bold font-mono text-white")}>{item.position || '—'}</td>
                         <td className={cn("px-6 py-4 text-xs font-bold font-mono text-white")}>{item.sku}</td>
                         <td className={cn("px-6 py-4 text-xs font-medium group-hover:text-white transition-colors text-white/90")}>{item.description}</td>
                         <td className={cn("px-6 py-4 text-xs font-bold text-orange-300")}>
@@ -1260,14 +1272,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                     ))}
                     {filteredItems.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-white/50 italic text-sm">
+                        <td colSpan={3} className="px-6 py-12 text-center text-white/50 italic text-sm">
                           Nenhum item encontrado para a pesquisa.
                         </td>
                       </tr>
                     )}
                     {filteredItems.length > 500 && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-4 text-center text-white/60 text-[10px] font-bold uppercase tracking-widest bg-slate-950/70">
+                        <td colSpan={3} className="px-6 py-4 text-center text-white/60 text-[10px] font-bold uppercase tracking-widest bg-slate-950/70">
                           Mostrando os primeiros 500 itens de {filteredItems.length}. Use a pesquisa para filtrar.
                         </td>
                       </tr>
@@ -2119,7 +2131,8 @@ export async function processWorkbook(wb: XLSX.WorkBook) {
           fefoEntryDate,
           perdaEntryDate,
           daysUntilFefo,
-          daysUntilPerda
+          daysUntilPerda,
+          area
         });
       }
       
