@@ -1435,8 +1435,8 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-3xl border p-4 bg-amber-50/5">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="rounded-3xl border border-amber-200/40 bg-amber-100/10 p-4 shadow-sm">
                 <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -1464,7 +1464,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   </table>
                 </div>
               </div>
-              <div className="rounded-3xl border p-4 bg-sky-50/5">
+              <div className="rounded-3xl border border-sky-200/40 bg-sky-100/10 p-4 shadow-sm">
                 <h4 className="text-xs font-black uppercase tracking-wider text-sky-900 mb-2">TOP 10 FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -1492,7 +1492,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   </table>
                 </div>
               </div>
-              <div className="rounded-3xl border p-4 bg-rose-50/5">
+              <div className="rounded-3xl border border-rose-200/40 bg-rose-100/10 p-4 shadow-sm">
                 <h4 className="text-xs font-black uppercase tracking-wider text-rose-900 mb-2">TOP 10 PERDA (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
