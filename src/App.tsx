@@ -1332,24 +1332,24 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   <div className="h-3 w-3 rounded-full bg-amber-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-amber-200 font-black">PRÉ-FEFO</p>
-                    <p className="text-3xl font-black text-white">{preFefoGrouped.length}</p>
-                    <p className="text-xs text-white/50">Valor {totalCurrency(preFefoTotalValue)}</p>
+                    <p className="text-3xl font-black text-black">{preFefoGrouped.length}</p>
+                    <p className="text-xs text-black/70">Valor {totalCurrency(preFefoTotalValue)}</p>
                   </div>
                 </div>
                 <div className="rounded-3xl border border-sky-400/20 bg-sky-500/10 p-6 flex flex-col gap-3">
                   <div className="h-3 w-3 rounded-full bg-sky-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-black">FEFO</p>
-                    <p className="text-3xl font-black text-white">{fefoGrouped.length}</p>
-                    <p className="text-xs text-white/50">Valor {totalCurrency(fefoTotalValue)}</p>
+                    <p className="text-3xl font-black text-black">{fefoGrouped.length}</p>
+                    <p className="text-xs text-black/70">Valor {totalCurrency(fefoTotalValue)}</p>
                   </div>
                 </div>
                 <div className="rounded-3xl border border-rose-400/20 bg-rose-500/10 p-6 flex flex-col gap-3">
                   <div className="h-3 w-3 rounded-full bg-rose-400" />
                   <div>
                     <p className="text-xs uppercase tracking-[0.25em] text-rose-200 font-black">PERDA</p>
-                    <p className="text-3xl font-black text-white">{(perdaProjectionGrouped.length + perdaActiveGrouped.length).toLocaleString()}</p>
-                    <p className="text-xs text-white/50">Valor {totalCurrency(perdaProjectionTotalValue + perdaActiveTotalValue)}</p>
+                    <p className="text-3xl font-black text-black">{(perdaProjectionGrouped.length + perdaActiveGrouped.length).toLocaleString()}</p>
+                    <p className="text-xs text-black/70">Valor {totalCurrency(perdaProjectionTotalValue + perdaActiveTotalValue)}</p>
                   </div>
                 </div>
               </div>
@@ -1438,39 +1438,87 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-3xl border p-4 bg-amber-50/5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-amber-200 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
-                <ol className="list-decimal list-inside space-y-2">
-                  {topPreFefo.map((it, idx) => (
-                    <li key={it.sku + idx} className="flex justify-between gap-4">
-                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
-                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
-                    </li>
-                  ))}
-                  {topPreFefo.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
-                </ol>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="align-top">
+                      {topPreFefo.map((it, idx) => (
+                        <tr key={it.sku + idx} className="border-t border-white/5 py-2">
+                          <td className="py-2 text-sm font-bold align-top">{it.sku}</td>
+                          <td className="py-2 text-sm text-zinc-500 truncate max-w-[18rem]">{it.description || '—'}</td>
+                          <td className="py-2 text-sm font-black text-right align-top">{totalCurrency(it.valueBRL ?? 0)}</td>
+                        </tr>
+                      ))}
+                      {topPreFefo.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="py-4 text-xs text-zinc-500">Nenhum item</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div className="rounded-3xl border p-4 bg-sky-50/5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-sky-200 mb-2">TOP 10 FEFO (por valor)</h4>
-                <ol className="list-decimal list-inside space-y-2">
-                  {topFefo.map((it, idx) => (
-                    <li key={it.sku + idx} className="flex justify-between gap-4">
-                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
-                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
-                    </li>
-                  ))}
-                  {topFefo.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
-                </ol>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topFefo.map((it, idx) => (
+                        <tr key={it.sku + idx} className="border-t border-white/5">
+                          <td className="py-2 text-sm font-bold align-top">{it.sku}</td>
+                          <td className="py-2 text-sm text-zinc-500 truncate max-w-[18rem]">{it.description || '—'}</td>
+                          <td className="py-2 text-sm font-black text-right align-top">{totalCurrency(it.valueBRL ?? 0)}</td>
+                        </tr>
+                      ))}
+                      {topFefo.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="py-4 text-xs text-zinc-500">Nenhum item</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div className="rounded-3xl border p-4 bg-rose-50/5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-rose-200 mb-2">TOP 10 PERDA (por valor)</h4>
-                <ol className="list-decimal list-inside space-y-2">
-                  {topPerda.map((it, idx) => (
-                    <li key={it.sku + idx} className="flex justify-between gap-4">
-                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
-                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
-                    </li>
-                  ))}
-                  {topPerda.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
-                </ol>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topPerda.map((it, idx) => (
+                        <tr key={it.sku + idx} className="border-t border-white/5">
+                          <td className="py-2 text-sm font-bold align-top">{it.sku}</td>
+                          <td className="py-2 text-sm text-zinc-500 truncate max-w-[18rem]">{it.description || '—'}</td>
+                          <td className="py-2 text-sm font-black text-right align-top">{totalCurrency(it.valueBRL ?? 0)}</td>
+                        </tr>
+                      ))}
+                      {topPerda.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className="py-4 text-xs text-zinc-500">Nenhum item</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </motion.div>
