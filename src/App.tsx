@@ -1436,8 +1436,8 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
             className="space-y-6"
           >
             <div className="grid grid-cols-1 gap-4">
-              <div className="rounded-3xl border border-amber-200/40 bg-amber-100/10 p-4 shadow-sm">
-                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
+              <div className="rounded-3xl border border-amber-300/80 bg-amber-100/20 p-4 shadow-sm shadow-amber-900/10">
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-950 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -1464,8 +1464,8 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   </table>
                 </div>
               </div>
-              <div className="rounded-3xl border border-sky-200/40 bg-sky-100/10 p-4 shadow-sm">
-                <h4 className="text-xs font-black uppercase tracking-wider text-sky-900 mb-2">TOP 10 FEFO (por valor)</h4>
+              <div className="rounded-3xl border border-sky-300/80 bg-sky-100/20 p-4 shadow-sm shadow-sky-900/10">
+                <h4 className="text-xs font-black uppercase tracking-wider text-sky-950 mb-2">TOP 10 FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -1492,8 +1492,8 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                   </table>
                 </div>
               </div>
-              <div className="rounded-3xl border border-rose-200/40 bg-rose-100/10 p-4 shadow-sm">
-                <h4 className="text-xs font-black uppercase tracking-wider text-rose-900 mb-2">TOP 10 PERDA (por valor)</h4>
+              <div className="rounded-3xl border border-rose-300/80 bg-rose-100/20 p-4 shadow-sm shadow-rose-900/10">
+                <h4 className="text-xs font-black uppercase tracking-wider text-rose-950 mb-2">TOP 10 PERDA (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
