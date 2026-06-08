@@ -1437,14 +1437,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-3xl border p-4 bg-amber-50/5">
-                <h4 className="text-xs font-black uppercase tracking-wider text-amber-200 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left">
-                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                        <th className="pb-2 text-xs font-black text-amber-900">SKU</th>
+                        <th className="pb-2 text-xs font-black text-amber-900">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-amber-900 text-right">Valor</th>
                       </tr>
                     </thead>
                     <tbody className="align-top">
@@ -1465,14 +1465,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                 </div>
               </div>
               <div className="rounded-3xl border p-4 bg-sky-50/5">
-                <h4 className="text-xs font-black uppercase tracking-wider text-sky-200 mb-2">TOP 10 FEFO (por valor)</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-sky-900 mb-2">TOP 10 FEFO (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left">
-                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                        <th className="pb-2 text-xs font-black text-sky-900">SKU</th>
+                        <th className="pb-2 text-xs font-black text-sky-900">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-sky-900 text-right">Valor</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1493,14 +1493,14 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
                 </div>
               </div>
               <div className="rounded-3xl border p-4 bg-rose-50/5">
-                <h4 className="text-xs font-black uppercase tracking-wider text-rose-200 mb-2">TOP 10 PERDA (por valor)</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-rose-900 mb-2">TOP 10 PERDA (por valor)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left">
-                        <th className="pb-2 text-xs font-black text-zinc-500">SKU</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500">Descrição</th>
-                        <th className="pb-2 text-xs font-black text-zinc-500 text-right">Valor</th>
+                        <th className="pb-2 text-xs font-black text-rose-900">SKU</th>
+                        <th className="pb-2 text-xs font-black text-rose-900">Descrição</th>
+                        <th className="pb-2 text-xs font-black text-rose-900 text-right">Valor</th>
                       </tr>
                     </thead>
                     <tbody>
