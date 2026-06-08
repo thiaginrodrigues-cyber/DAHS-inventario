@@ -727,7 +727,7 @@ const AlertCard = ({ sub, theme }: { sub: OccupancyMetric, theme?: any }) => {
 };
 
 const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: InventarioGTData | undefined, theme: any, onRefresh: () => void, lastSync: Date | null }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'fefo'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'fefo' | 'top10'>('geral');
   const [searchTerm, setSearchTerm] = useState('');
   
   if (!data) {
@@ -869,6 +869,23 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
   const perdaProjectionGrouped = React.useMemo(() => aggregateBySKU(perdaProjection), [perdaProjection]);
   const perdaActiveGrouped = React.useMemo(() => aggregateBySKU(perdaActive), [perdaActive]);
 
+  const perdaAllGrouped = React.useMemo(() => aggregateBySKU(perdaProjection.concat(perdaActive)), [perdaProjection, perdaActive]);
+
+  const topPreFefo = React.useMemo(() =>
+    preFefoGrouped.slice().sort((a, b) => (b.valueBRL ?? 0) - (a.valueBRL ?? 0)).slice(0, 10),
+    [preFefoGrouped]
+  );
+
+  const topFefo = React.useMemo(() =>
+    fefoGrouped.slice().sort((a, b) => (b.valueBRL ?? 0) - (a.valueBRL ?? 0)).slice(0, 10),
+    [fefoGrouped]
+  );
+
+  const topPerda = React.useMemo(() =>
+    perdaAllGrouped.slice().sort((a, b) => (b.valueBRL ?? 0) - (a.valueBRL ?? 0)).slice(0, 10),
+    [perdaAllGrouped]
+  );
+
   const perdaProjectionTotalValue = React.useMemo(
     () => perdaProjectionGrouped.reduce((sum, item) => sum + (item.valueBRL ?? 0), 0),
     [perdaProjectionGrouped]
@@ -989,28 +1006,28 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
       <div className="grid grid-cols-1 gap-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pt-5">
           <div className="rounded-3xl border border-amber-400/20 bg-amber-500/10 p-6">
-            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-amber-100 mb-3">Projeção PRÉ-FEFO</p>
+            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-amber-900 mb-3">Projeção PRÉ-FEFO</p>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Itens</p>
-                <p className="text-3xl font-black text-white mt-2">{preFefoGrouped.length}</p>
+                <p className="text-3xl font-black text-amber-900 mt-2">{preFefoGrouped.length}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-amber-200">Valor</p>
-                <p className="text-3xl font-black text-white mt-2">{totalCurrency(preFefoTotalValue)}</p>
+                <p className="text-3xl font-black text-amber-900 mt-2">{totalCurrency(preFefoTotalValue)}</p>
               </div>
             </div>
           </div>
           <div className="rounded-3xl border border-sky-400/20 bg-sky-500/10 p-6">
-            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-sky-100 mb-3">Projeção FEFO</p>
+            <p className="text-[10px] uppercase tracking-[0.24em] font-black text-sky-900 mb-3">Projeção FEFO</p>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Itens</p>
-                <p className="text-3xl font-black text-white mt-2">{fefoGrouped.length}</p>
+                <p className="text-3xl font-black text-sky-900 mt-2">{fefoGrouped.length}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.24em] font-black text-sky-200">Valor</p>
-                <p className="text-3xl font-black text-white mt-2">{totalCurrency(fefoTotalValue)}</p>
+                <p className="text-3xl font-black text-sky-900 mt-2">{totalCurrency(fefoTotalValue)}</p>
               </div>
             </div>
           </div>
@@ -1049,7 +1066,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
   }) => (
     <div className="flex flex-col min-h-0">
       <div className="px-5 py-3 border-b border-white/10 bg-rose-950/40">
-        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-100">{title}</h4>
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-900">{title}</h4>
         <p className="text-[10px] text-rose-200/70 mt-0.5">{items.length} produto{items.length !== 1 ? 's' : ''}</p>
       </div>
       <table className="w-full text-left border-collapse">
@@ -1136,7 +1153,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/20 px-5 py-4 flex items-start gap-3 shadow-lg shadow-rose-900/20">
           <AlertCircle className="w-6 h-6 text-rose-300 shrink-0 mt-0.5 animate-pulse" />
           <div className="min-w-0">
-            <p className="text-sm font-black uppercase tracking-wider text-rose-100">
+            <p className="text-sm font-black uppercase tracking-wider text-rose-900">
               Alerta — {perdaUpcomingAlert.length} produto{perdaUpcomingAlert.length !== 1 ? 's' : ''} entra{perdaUpcomingAlert.length === 1 ? '' : 'm'} em PERDA em até {PERDA_ENTRY_DAYS} dias
             </p>
             <p className="text-xs text-rose-200/90 mt-1 truncate">
@@ -1188,6 +1205,17 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
           )}
         >
           Análise de FEFO
+        </button>
+        <button
+          onClick={() => setActiveTab('top10')}
+          className={cn(
+            "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+            activeTab === 'top10'
+              ? theme.active
+              : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+          )}
+        >
+          TOP 10
         </button>
       </div>
 
@@ -1289,7 +1317,7 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
               </div>
             </div>
           </motion.div>
-        ) : (
+        ) : activeTab === 'fefo' ? (
           <motion.div 
             key="fefo"
             initial={{ opacity: 0, y: 10 }}
@@ -1399,7 +1427,54 @@ const InventarioGeralView = ({ data, theme, onRefresh, lastSync }: { data: Inven
               </div>
             </div>
           </motion.div>
-        )}
+        ) : activeTab === 'top10' ? (
+          <motion.div 
+            key="top10"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-3xl border p-4 bg-amber-50/5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-200 mb-2">TOP 10 PRÉ-FEFO (por valor)</h4>
+                <ol className="list-decimal list-inside space-y-2">
+                  {topPreFefo.map((it, idx) => (
+                    <li key={it.sku + idx} className="flex justify-between gap-4">
+                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
+                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
+                    </li>
+                  ))}
+                  {topPreFefo.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
+                </ol>
+              </div>
+              <div className="rounded-3xl border p-4 bg-sky-50/5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-sky-200 mb-2">TOP 10 FEFO (por valor)</h4>
+                <ol className="list-decimal list-inside space-y-2">
+                  {topFefo.map((it, idx) => (
+                    <li key={it.sku + idx} className="flex justify-between gap-4">
+                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
+                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
+                    </li>
+                  ))}
+                  {topFefo.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
+                </ol>
+              </div>
+              <div className="rounded-3xl border p-4 bg-rose-50/5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-rose-200 mb-2">TOP 10 PERDA (por valor)</h4>
+                <ol className="list-decimal list-inside space-y-2">
+                  {topPerda.map((it, idx) => (
+                    <li key={it.sku + idx} className="flex justify-between gap-4">
+                      <div className="truncate text-sm font-bold">{it.sku} — {it.position}</div>
+                      <div className="text-sm font-black">{totalCurrency(it.valueBRL ?? 0)}</div>
+                    </li>
+                  ))}
+                  {topPerda.length === 0 && <div className="text-xs text-zinc-500">Nenhum item</div>}
+                </ol>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
       </AnimatePresence>
     </div>
   );
